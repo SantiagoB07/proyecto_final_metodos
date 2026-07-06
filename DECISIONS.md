@@ -20,3 +20,7 @@ Decisiones importantes tomadas durante la implementación, con su justificación
 **Consecuencia:** snapshot en vivo → guardar crudo con fecha en `data/raw/`, calibrar desde archivo.
 
 <!-- Nuevas decisiones se agregan abajo con D5, D6, ... -->
+
+## D5 — m(-j) analítico en el valuador de Gil-Pelaez
+**Decisión:** el valuador calcula `m(-j) = S·e^{(r-q)τ}` analíticamente en vez de evaluar la fórmula cerrada de la función característica en φ=-j.
+**Por qué:** la fórmula tiene una singularidad removible en φ=0 y φ=-j (allí `a+d=0` y `g` diverge → nan). Como `m(-j)=E[S_T]` vale para cualquier modelo martingala, calcularlo analíticamente es exacto y robusto, y sirve para Heston y Lin–He por igual. Los nodos de Gauss-Legendre son reales positivos, así que nunca tocan la singularidad.

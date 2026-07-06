@@ -10,8 +10,8 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | Etapa | Descripción | Estado |
 | --- | --- | --- |
 | 0 | Infraestructura (uv, layout, tooling) | ✅ |
-| 1 | Pricer de referencia (Black–Scholes, Heston) | 🟡 |
-| 2 | Pricer del modelo Lin–He | ⬜ |
+| 1 | Pricer de referencia (Black–Scholes, Heston) | ✅ |
+| 2 | Pricer del modelo Lin–He | 🟡 |
 | 3 | Verificación Monte Carlo + figuras del artículo | ⬜ |
 | 4 | Análisis numérico del método | ⬜ |
 | 5 | Datos de mercado (yfinance ^SPX) | ⬜ |
@@ -32,12 +32,21 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 
 Nota: exportación de slides a PDF se verifica en Etapa 8 (requiere navegador, no headless).
 
-## Etapa 1 — Pricer de referencia (Black–Scholes, Heston)
+## Etapa 1 — Pricer de referencia (Black–Scholes, Heston) ✅
 
-- ⬜ Black–Scholes cerrado (call/put) + volatilidad implícita (Brent)
-- ⬜ Función característica de Heston
-- ⬜ Pricer por Gil-Pelaez (P₁, P₂ con cuadratura)
-- ⬜ Tests: Heston→BS (σ→0, v₀=θ), paridad put-call, valores de referencia
+- ✅ Black–Scholes cerrado (call/put con q) + volatilidad implícita (Brent)
+- ✅ Función característica de Heston (`charfn.py`: heston_core/D/Cbar/cf)
+- ✅ Pricer por Gil-Pelaez (P₁, P₂; Gauss-Legendre truncado, defaults u_max=200, n=256)
+- ✅ 13 tests: BS ref, paridad put-call (BS y Heston), IV roundtrip, m(0)=1/m(-j)=fwd,
+  Heston→BS (σ→0) en 5 strikes, GL vs quad adaptativo, convergencia
+- Decisión D5: m(-j) se calcula analíticamente como S·e^{(r-q)τ} (singularidad removible en φ=-j)
+
+## Etapa 2 — Pricer del modelo Lin–He
+
+- ⬜ f(φ;τ) (ec. 2.19), matriz M (ec. 2.18), factor ⟨e^M X_t, I⟩ vía expm
+- ⬜ Función característica m(φ) del modelo Lin–He (ec. 2.20)
+- ⬜ pricer reutilizando Gil-Pelaez
+- ⬜ Tests: degeneración a Heston (λ₁=λ₂=0), m(0)=1, verificar erratas del artículo
 
 ## Bloqueantes
 
