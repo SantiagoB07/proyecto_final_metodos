@@ -1,0 +1,16 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node / reveal.js
+node_modules/
+
+# Typst
+paper/*.pdf
+
+# Sistema
+.DS_Store

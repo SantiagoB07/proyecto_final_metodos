@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Valoración de opciones — Modelo Heston de dos factores con cambio de régimen</title>
+
+    <!-- reveal.js desde CDN. Para presentar sin internet, reemplazar por copia local
+         (ver docs/plan.md §8). -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h2>Valoración analítica de opciones europeas</h2>
+          <h3>Modelo Heston de dos factores con cambio de régimen</h3>
+          <p><small>Lin &amp; He (2021) — Métodos Numéricos en Finanzas · UNAL 2026-I</small></p>
+        </section>
+
+        <section>
+          <h3>Motivación</h3>
+          <p>TODO: volatility smile, límites de Black–Scholes y de Heston.</p>
+        </section>
+
+        <section>
+          <h3>El modelo</h3>
+          <p>TODO: dinámica de dos factores + cadena de Markov.</p>
+          <p>\[ dv = k(\theta - v)\,dt + \sigma\sqrt{v}\,dW^2 + \lambda_{X_t}\,dB \]</p>
+        </section>
+
+        <!-- TODO: derivación en 2 pasos, verificación, datos, calibración,
+             comparación con el original, conclusiones (15-20 slides). -->
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/math/math.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        plugins: [RevealMath.KaTeX],
+      });
+    </script>
+  </body>
+</html>
