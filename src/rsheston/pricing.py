@@ -18,11 +18,18 @@ donde ``m(-j) = E[S_T] = S*e^{(r-q)*tau}``.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Callable
 
 import numpy as np
 from scipy.optimize import brentq
 from scipy.stats import norm
+
+
+@lru_cache(maxsize=32)
+def _leggauss_cached(n_nodes):
+    """Nodos y pesos de Gauss-Legendre en [-1, 1], cacheados (leggauss es O(n^2))."""
+    return np.polynomial.legendre.leggauss(n_nodes)
 
 # Configuración por defecto de la cuadratura de Gil-Pelaez. La Etapa 4 (análisis numérico)
 # justifica estos valores estudiando convergencia frente al truncamiento y el número de nodos.
@@ -137,7 +144,7 @@ def gil_pelaez_call(
 
     # Nodos y pesos de Gauss-Legendre mapeados de [-1, 1] a [0, u_max]. Los nodos son
     # interiores, así que phi nunca es exactamente 0 y se evita la singularidad de 1/(j*phi).
-    x, w = np.polynomial.legendre.leggauss(n_nodes)
+    x, w = _leggauss_cached(n_nodes)
     phi = 0.5 * u_max * (x + 1.0)
     weights = 0.5 * u_max * w
 
@@ -157,3 +164,52 @@ def gil_pelaez_call(
     P1 = 0.5 + np.sum(weights * integrand_1) / np.pi
 
     return float(np.real(np.exp(-r * tau) * (m_neg_j * P1 - K * P2)))
+
+
+def gil_pelaez_calls(
+    cf: Callable,
+    S,
+    Ks,
+    r,
+    tau,
+    q=0.0,
+    u_max=DEFAULT_U_MAX,
+    n_nodes=DEFAULT_N_NODES,
+    adaptive=True,
+    tol=DEFAULT_TRUNC_TOL,
+):
+    """Precios de varias calls con el mismo (S, tau, r, q) en una sola pasada (vectorizado).
+
+    La función característica ``m(phi)`` no depende del strike, así que se evalúa una sola vez y
+    se reutiliza para todos los strikes; solo el núcleo ``e^{-j phi ln K}`` cambia con K. Es la
+    ruta usada por la calibración (agrupa por vencimiento), mucho más rápida que valorar strike
+    por strike.
+
+    Args:
+        Ks: arreglo de strikes.
+        (resto igual que gil_pelaez_call).
+
+    Returns:
+        ndarray de precios, uno por strike.
+    """
+    Ks = np.atleast_1d(np.asarray(Ks, dtype=float))
+    if adaptive:
+        u_max = adaptive_truncation(cf, u_cap=u_max, tol=tol)
+
+    x, w = _leggauss_cached(n_nodes)
+    phi = 0.5 * u_max * (x + 1.0)
+    weights = 0.5 * u_max * w
+
+    m_neg_j = S * np.exp((r - q) * tau)
+    m_phi = cf(phi)
+    m_phi_shift = cf(phi - 1j)
+
+    base = 1.0 / (1j * phi)  # (n_nodes,)
+    kernel = np.exp(-1j * np.outer(np.log(Ks), phi)) * base[None, :]  # (nK, n_nodes)
+    integrand_2 = np.real(kernel * m_phi[None, :])
+    integrand_1 = np.real(kernel * (m_phi_shift / m_neg_j)[None, :])
+
+    P2 = 0.5 + (integrand_2 @ weights) / np.pi
+    P1 = 0.5 + (integrand_1 @ weights) / np.pi
+
+    return np.real(np.exp(-r * tau) * (m_neg_j * P1 - Ks * P2))

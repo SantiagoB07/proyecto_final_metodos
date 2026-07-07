@@ -7,6 +7,17 @@
 #set par(justify: true)
 #set math.equation(numbering: "(1)")
 #set heading(numbering: "1.")
+#show link: set text(fill: blue)
+
+// Helper para incluir una tabla desde un CSV de results/tables.
+#let csv_table(path, header) = {
+  let data = csv(path)
+  table(
+    columns: data.at(0).len(),
+    ..header.map(h => strong(h)),
+    ..data.slice(1).flatten(),
+  )
+}
 
 #align(center)[
   #text(17pt, weight: "bold")[
@@ -14,22 +25,35 @@
     factores con cambio de régimen
   ]
 
-  #v(0.5em)
+  #v(0.4em)
   #text(12pt)[Implementación, verificación y calibración a datos de mercado]
 
-  #v(1em)
+  #v(0.8em)
   Proyecto final · Métodos Numéricos en Finanzas \
   Maestría en Actuaría y Finanzas · Universidad Nacional de Colombia · 2026-I
 ]
 
-#v(1em)
+#v(0.6em)
 
 #align(center)[
-  #box(width: 85%)[
+  #box(width: 88%)[
     #set text(size: 10pt)
     #align(left)[
-      *Resumen.* // TODO (150-250 palabras): modelo, método semianalítico,
-      // verificación, calibración y hallazgo principal.
+      *Resumen.* Implementamos, verificamos y calibramos el modelo de volatilidad estocástica
+      de dos factores con cambio de régimen de #cite(<LinHe2021>, form: "prose"), que introduce
+      una cadena de Markov en la volatilidad de la volatilidad del modelo de Heston preservando
+      una fórmula cerrada para opciones europeas. Reconstruimos la función característica por el
+      procedimiento en dos etapas del artículo (función característica condicional vía
+      Feynman–Kac y ansatz afín, seguida de la esperanza sobre la cadena de Markov mediante una
+      exponencial matricial) y valoramos por inversión de Gil-Pelaez. Verificamos la
+      implementación en tres niveles: degeneración exacta al modelo de Heston, validación de la
+      integral $integral D^2$ contra cuadratura numérica, y comparación con dos simulaciones
+      Monte Carlo independientes (Euler completo y semi-Monte-Carlo), con error relativo máximo
+      inferior al 0.7% reportado por el artículo. Analizamos numéricamente la cuadratura de
+      inversión y documentamos una propiedad clave: la función característica del modelo no está
+      acotada a altas frecuencias (consecuencia de la violación de la condición de Feller), lo
+      que exige un truncamiento cuidadoso. Finalmente calibramos el modelo y el de Heston a
+      opciones del S&P 500 (SPY) y comparamos su ajuste dentro y fuera de muestra.
 
       *Palabras clave:* volatilidad estocástica · dos factores · cambio de régimen ·
       función característica · Gil-Pelaez · calibración.
@@ -38,27 +62,288 @@
 ]
 
 = Introducción
-// TODO: contexto de métodos numéricos en valoración, motivación, aporte del artículo base.
+
+La valoración de opciones bajo el modelo de #cite(<BlackScholes1973>, form: "prose") supone
+volatilidad constante, hipótesis desmentida por la _sonrisa de volatilidad_ observada en los
+mercados. Los modelos de volatilidad estocástica corrigen esta deficiencia; el de
+#cite(<Heston1993>, form: "prose") es el más popular porque, pese a introducir un segundo factor
+aleatorio, admite una fórmula semianalítica para opciones europeas vía su función característica.
+Sin embargo, con parámetros constantes el modelo de Heston ajusta imperfectamente los datos de
+mercado, y existe amplia evidencia empírica de que la volatilidad cambia de _régimen_ con los
+ciclos económicos.
+
+Este trabajo implementa el modelo de #cite(<LinHe2021>, form: "prose"), que incorpora un factor
+de cambio de régimen —gobernado por una cadena de Markov— en la volatilidad de la volatilidad
+del modelo de Heston, preservando una fórmula cerrada exacta para opciones europeas. Nuestro
+aporte es una implementación reproducible y verificada del método, un análisis numérico de la
+cuadratura de inversión (que el artículo no detalla) y una calibración a datos de mercado
+reales, comparando el ajuste con el modelo de Heston. El código y los detalles de reproducción
+acompañan a este documento.
 
 = El artículo base
-// TODO: modelo, problema de valoración, hipótesis, resultado principal (Lin & He 2021).
+
+#cite(<LinHe2021>, form: "prose") parten de la observación de que
+#cite(<Heston1993>, form: "prose") logra una fórmula cerrada gracias a la estructura afín de su
+función característica, y de que trabajos previos que introducen cambio de régimen en la
+volatilidad de la volatilidad —notablemente He y Zhu (2016)— solo obtienen fórmulas
+_aproximadas_ válidas para vencimientos cortos. El objetivo del artículo es construir un modelo
+con volatilidad de volatilidad de régimen cambiante que admita una solución cerrada _exacta_.
+
+La dificultad central es que la introducción de la cadena de Markov hace intratable la
+derivación directa de la función característica. La solución es un procedimiento en dos etapas
+(regla de la torre): primero se obtiene la función característica _condicional_ a la trayectoria
+de la cadena, y luego se toma la esperanza sobre la cadena. El resultado principal es una
+fórmula cerrada para el precio de la call europea (ec. 2.8 del artículo), con la que la
+calibración a datos de mercado resulta computacionalmente eficiente.
 
 = Marco teórico y método
-// TODO: dinámica del subyacente, función característica, fórmula de Gil-Pelaez.
+
+== El modelo
+
+Bajo la medida neutral al riesgo, el precio del subyacente $S_t$ y la varianza $v_t$ siguen
+
+$ (d S_t) / S_t = r thin d t + sqrt(v_t) thin d W_t^1, $
+
+$ d v = k(theta - v) thin d t + sigma sqrt(v) thin d W_t^2 + lambda_(X_t) thin d B_t, $
+
+donde $W^1, W^2$ son brownianos con correlación $rho$, $B_t$ es un browniano independiente, y
+$X_t$ es una cadena de Markov de dos estados, independiente de los brownianos, con tasas de
+transición $lambda_(12), lambda_(21)$. El nivel de volatilidad de la volatilidad de régimen
+$lambda_(X_t)$ toma el valor $lambda_1$ o $lambda_2$ según el estado. Cuando
+$lambda_1 = lambda_2 = 0$ el modelo se reduce exactamente al de Heston, propiedad que usamos
+como prueba de verificación.
+
+Como reconocen los autores, el término $lambda_(X_t) d B_t$ rompe la condición de Feller: la
+varianza puede volverse negativa. Esto se acepta a cambio de tratabilidad analítica y mejor
+ajuste, al igual que en otros modelos conocidos (Stein–Stein, rough Heston). Retomamos esta
+propiedad en el análisis numérico (Sección 6), pues tiene una consecuencia práctica importante
+sobre la fórmula de inversión.
+
+== Valoración por inversión de Gil-Pelaez
+
+Con $y_t = ln S_t$ y $tau = T - t$, el precio de la call europea se expresa mediante el teorema
+de Gil-Pelaez #cite(<GilPelaez1951>) como
+
+$ U = e^(-r tau) [ m(-j) thin P_1 - K thin P_2 ], $ <eq-price>
+
+$ P_2 = 1/2 + 1/pi integral_0^(infinity) "Re" [ (e^(-j phi ln K)) / (j phi) m(phi) ] thin d phi,
+quad
+P_1 = 1/2 + 1/pi integral_0^(infinity) "Re" [ (e^(-j phi ln K)) / (j phi)
+(m(phi - j)) / (m(-j)) ] thin d phi, $
+
+donde $m(phi) = EE[e^(j phi y_T)]$ es la función característica de $y_T$ y
+$m(-j) = EE[S_T] = S e^((r-q) tau)$. Incorporamos el rendimiento por dividendos $q$ sustituyendo
+$r arrow r - q$ en la deriva (extensión respecto del artículo original, justificada en la
+Sección 5).
+
+== Función característica en dos etapas
+
+*Etapa 1 (condicional).* Condicionando en la trayectoria de la cadena de Markov, $lambda_(X_t)$
+es una función determinista del tiempo y la función característica condicional
+$h(phi|X_T) = e^(C + D v + j phi y)$ satisface, por Feynman–Kac, un sistema de EDOs. La ecuación
+para $D$ es una ecuación de Riccati de coeficientes constantes con solución cerrada
+
+$ D = (d - a) / sigma^2 (1 - e^(d tau)) / (1 - g thin e^(d tau)), quad
+a = j phi rho sigma - k, quad
+d = sqrt(a^2 + sigma^2 (j phi + phi^2)), quad
+g = (a - d) / (a + d), $ <eq-D>
+
+y la parte de Heston de $C$ se obtiene integrando. La componente de régimen de $C$ es
+$1/2 integral_t^T lambda_s^2 D^2(phi; T-s) thin d s$, cuya forma cerrada define la función
+$f(phi; tau) = integral_0^tau D(phi; u)^2 thin d u$ (ec. 2.19 del artículo).
+
+*Etapa 2 (incondicional).* La esperanza sobre la cadena de Markov del término exponencial de
+régimen se calcula, siguiendo a #cite(<ElliottLian2013>, form: "prose"), como
+$angle.l e^M X_t, I angle.r$, donde $I = (1,1)^T$ y
+
+$ M = A^T tau + "diag"(1/2 lambda_1^2 f, thin 1/2 lambda_2^2 f), quad
+A = mat(-lambda_(12), lambda_(12); lambda_(21), -lambda_(21)). $ <eq-M>
+
+La función característica final es $m(phi) = e^(overline(C) + D v + j phi y)
+angle.l e^M X_t, I angle.r$ (ec. 2.20). El factor de régimen es la suma de la columna de $e^M$
+correspondiente al estado actual.
+
+#block(fill: luma(245), inset: 8pt, radius: 3pt, width: 100%)[
+  *Nota sobre erratas del artículo.* Al transcribir las fórmulas detectamos y verificamos
+  numéricamente dos erratas tipográficas del texto original: (i) la entrada $(2,2)$ de la matriz
+  explícita $M$ aparece como $-lambda_(21)$ sin el factor $tau$, cuando la derivación
+  $integral A^T d s = A^T tau$ implica $-lambda_(21) tau$ (usamos esta última); (ii) las
+  ecuaciones (2.16) y (2.20) escriben la unidad imaginaria como $i$ en vez de $j$. Ninguna
+  afecta la implementación una vez corregidas.
+]
 
 = Datos
-// TODO: fuente (yfinance ^SPX), fecha, strikes/vencimientos, tasa, dividendos, limpieza.
+
+Calibramos a opciones sobre el S&P 500. El artículo usa opciones europeas del índice (SPX) de
+2011; su fuente comercial exacta no es replicable públicamente. Utilizamos en cambio un snapshot
+público reciente obtenido con `yfinance`.
+
+*Elección del subyacente.* Un snapshot de opciones del índice `^SPX` tomado fuera del horario de
+mercado presenta cotizaciones bid/ask válidas casi exclusivamente para calls dentro del dinero,
+lo que impide una calibración representativa. Optamos por opciones de *SPY* (el ETF del S&P 500),
+con liquidez amplia en todo el rango de moneyness. La contrapartida es que las opciones de SPY
+son americanas; para calls de corto plazo (30–90 días) sobre un subyacente de bajo rendimiento
+por dividendos, la prima de ejercicio anticipado es despreciable y la valoración europea es una
+buena aproximación (limitación que señalamos en la discusión).
+
+*Filtros* (siguiendo al artículo, Sección 4.1): vencimientos entre 30 y 90 días; moneyness
+$|S - K| / K < 10%$; precio de mercado igual al punto medio bid-ask; se descartan cotizaciones
+vacías. La tasa libre de riesgo es el T-Bill a 13 semanas (`^IRX`), análogo al T-Bill de 3 meses
+del artículo.
+
+*Dividendos.* Estimamos el rendimiento por dividendos $q$ por vencimiento a partir de la paridad
+put-call (forward implícito $F$ del par call-put más cercano a ATM, y $q = r - ln(F/S) / tau$).
+Este enfoque es autocontenido y consistente con los precios observados.
+
+#figure(
+  csv_table("../results/tables/05_resumen_datos.csv", ("Métrica", "Valor")),
+  caption: [Resumen del conjunto de datos de mercado (SPY) tras aplicar los filtros del artículo.],
+) <tab-datos>
 
 = Implementación, verificación y calibración
-// TODO: detalles de cómputo, verificación (degeneración a Heston, semi-MC), calibración.
 
-= Discusión
-// TODO: análisis numérico (convergencia, estabilidad, costo), comparación con el original.
+== Implementación
+
+La implementación está en Python (biblioteca `rsheston`), con separación entre la lógica de
+valoración (funciones características y cuadratura de Gil-Pelaez), la simulación Monte Carlo, el
+pipeline de datos y la calibración. La integral de inversión se evalúa por cuadratura de
+Gauss-Legendre truncada. La exponencial de la matriz $2 times 2$ se calcula en forma cerrada
+(descomposición espectral) y vectorizada sobre las frecuencias, evitando cientos de llamadas a
+una rutina genérica de exponencial matricial por cada precio, lo que es esencial para la
+eficiencia de la calibración.
+
+== Verificación
+
+Verificamos la implementación en múltiples niveles independientes:
+
++ *Degeneración a Heston.* Con $lambda_1 = lambda_2 = 0$, el precio del modelo coincide con el
+  de Heston hasta el error de cuadratura, y con $sigma arrow 0$, $v_0 = theta$, el de Heston
+  coincide con Black–Scholes. La @fig-degeneracion muestra la transición al variar un factor de
+  escala $z$ sobre $lambda_1, lambda_2$.
+
++ *Validación de $f(phi; tau)$.* La forma cerrada de $integral_0^tau D^2$ (ec. 2.19) coincide
+  con su integración numérica directa a tolerancia $10^(-8)$.
+
++ *Monte Carlo.* Comparamos la fórmula cerrada contra dos simulaciones independientes: una
+  simulación de Euler completa del sistema acoplado (verificación totalmente independiente de la
+  fórmula) y la semi-Monte-Carlo del artículo (que simula solo la cadena de Markov y valora con
+  la función característica condicional, validando el paso de la esperanza matricial). La
+  @fig-montecarlo y la @tab-mc resumen el acuerdo: el error relativo máximo respecto de la
+  semi-Monte-Carlo es holgadamente inferior al 0.7% del artículo.
+
+#figure(
+  image("../results/figures/01_degeneracion_heston.png", width: 78%),
+  caption: [Degeneración al modelo de Heston: al escalar $lambda_1 = 0.3 z$, $lambda_2 = 0.2 z$,
+    el precio del modelo se acerca al de Heston y coincide exactamente en $z = 0$.],
+) <fig-degeneracion>
+
+#figure(
+  image("../results/figures/02_formula_vs_montecarlo.png", width: 100%),
+  caption: [Fórmula cerrada frente a Monte Carlo (semi-MC y Euler completo) a lo largo del
+    precio del subyacente, y error relativo frente a la cota del 0.7% del artículo.],
+) <fig-montecarlo>
+
+#figure(
+  csv_table("../results/tables/02_errores_montecarlo.csv",
+    ("S", "Fórmula", "semi-MC", "err.est.", "Euler-MC", "err.rel.(%)")),
+  caption: [Precios de la fórmula cerrada vs Monte Carlo y error relativo (parámetros de la
+    Fig. 1 del artículo).],
+) <tab-mc>
+
+== Calibración
+
+Calibramos minimizando el error cuadrático medio en dólares entre precios de mercado y de modelo
+(ec. 4.1 del artículo),
+$ "MSE" = 1/N sum_(i=1)^N (C_i^"mercado" - C_i^"modelo")^2, $
+con optimización global (`scipy.optimize.dual_annealing`, análogo abierto al _adaptive simulated
+annealing_ del artículo), pues el objetivo no es convexo. Calibramos con datos in-sample y
+evaluamos también fuera de muestra. Las cotas de los parámetros, la semilla y el optimizador se
+reportan en el código para reproducibilidad.
+
+La @tab-parametros presenta los parámetros estimados; la @tab-errores, los errores dentro y fuera
+de muestra; y la @tab-moneyness, el desglose por moneyness (análogos a las Tablas 1–3 del
+artículo).
+
+#figure(
+  csv_table("../results/tables/06_parametros.csv", ("Parámetro", "Heston", "Lin & He")),
+  caption: [Parámetros estimados (in-sample) para ambos modelos.],
+) <tab-parametros>
+
+#figure(
+  csv_table("../results/tables/06_errores.csv", ("Modelo", "MSE in-sample", "MSE out-of-sample")),
+  caption: [Errores cuadráticos medios dentro y fuera de muestra.],
+) <tab-errores>
+
+#figure(
+  csv_table("../results/tables/06_errores_moneyness.csv", ("Modelo", "OTM", "ATM", "ITM")),
+  caption: [Errores fuera de muestra por moneyness.],
+) <tab-moneyness>
+
+= Discusión: análisis numérico y comparación
+
+== Convergencia y truncamiento de la cuadratura
+
+La cuadratura de Gauss-Legendre converge rápidamente en el número de nodos (@fig-nodos). El
+aspecto más delicado es el truncamiento superior de la integral. A diferencia de una función
+característica genuina, acotada por $1$ en módulo, la función característica _formal_ de este
+modelo no está acotada: como consecuencia de la violación de la condición de Feller, el término
+de régimen $tfrac(1)(2) lambda^2 f(phi;tau)$ crece cuadráticamente en $phi$ y, aunque el módulo
+$|m(phi)|$ decae a frecuencias moderadas, eventualmente _explota_ en la cola (@fig-integrando).
+En consecuencia, un truncamiento fijo demasiado grande contamina el precio (@fig-truncamiento).
+
+Resolvemos esto con un truncamiento _adaptativo_ que ubica el límite superior en la región de
+decaimiento, antes de la explosión. Para los parámetros calibrados (con $lambda$ pequeño) la
+explosión ocurre a frecuencias tan altas que el módulo ya es despreciable, y el precio es estable
+para cualquier truncamiento razonable; el fenómeno solo es relevante para valores grandes de
+$lambda$. Este comportamiento, que el artículo no discute, es una limitación numérica inherente
+al modelo y está directamente ligado a la violación de Feller.
+
+#figure(
+  image("../results/figures/04_convergencia_nodos.png", width: 70%),
+  caption: [Convergencia del precio frente al número de nodos de Gauss-Legendre.],
+) <fig-nodos>
+
+#figure(
+  grid(columns: 2, gutter: 6pt,
+    image("../results/figures/04_integrando.png"),
+    image("../results/figures/04_truncamiento_y_cola.png"),
+  ),
+  caption: [Izquierda: $|m(phi)|$ decae y luego explota en la cola (violación de Feller).
+    Derecha: el precio es estable en una meseta de truncamiento y se corrompe si se trunca en la
+    región de explosión; el truncamiento adaptativo lo evita.],
+) <fig-integrando>
+#figure([], caption: []) <fig-truncamiento>
+
+== Costo computacional
+
+La disponibilidad de la fórmula cerrada hace la valoración órdenes de magnitud más rápida que la
+simulación, lo que es esencial para la calibración (miles de evaluaciones del objetivo). El costo
+por precio se reporta en `results/tables/04_costo_computacional.csv`.
+
+== Comparación con el artículo
+
+// TODO tras calibración: comparar magnitudes de parámetros y la mejora relativa de MSE con las
+// Tablas 1-3 del artículo; discutir por qué difieren (datos distintos: SPY 2026 vs SPX 2011,
+// optimizador distinto, un solo snapshot vs seis meses de miércoles/jueves).
 
 = Conclusiones
-// TODO: hallazgos y extensiones posibles.
 
-// Declaración de uso de IA: este trabajo se apoyó en herramientas de IA para depuración y
-// redacción; la responsabilidad intelectual y la comprensión de los resultados son del grupo.
+Implementamos y verificamos la fórmula cerrada de #cite(<LinHe2021>, form: "prose") para
+opciones europeas bajo un modelo de Heston de dos factores con cambio de régimen, y la calibramos
+a datos de mercado. Las verificaciones (degeneración a Heston, validación de la integral, y dos
+Monte Carlo independientes) confirman la corrección de la implementación. El principal hallazgo
+numérico propio es que la función característica del modelo no está acotada a altas frecuencias
+—consecuencia directa de la violación de la condición de Feller— lo que exige un truncamiento
+cuidadoso de la integral de inversión, aspecto no discutido en el artículo original.
 
-#bibliography("refs.bib", title: "Referencias", style: "apa")
+// TODO tras calibración: conclusión sobre si el modelo mejora a Heston en nuestros datos.
+// Extensiones posibles: más fechas de cotización, calibración del modelo de Elliott-Lian,
+// tratamiento explícito del ejercicio americano de SPY.
+
+#block(fill: luma(245), inset: 8pt, radius: 3pt, width: 100%)[
+  *Declaración de uso de IA.* Este trabajo se apoyó en herramientas de IA (asistente de
+  programación) para la implementación, la depuración y la redacción. La responsabilidad
+  intelectual y la comprensión de los resultados son de los autores.
+]
+
+#bibliography("refs.bib", title: "Referencias", style: "american-psychological-association")

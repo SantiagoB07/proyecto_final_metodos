@@ -13,9 +13,9 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | 1 | Pricer de referencia (Black–Scholes, Heston) | ✅ |
 | 2 | Pricer del modelo Lin–He | ✅ |
 | 3 | Verificación Monte Carlo + figuras del artículo | 🟡 |
-| 4 | Análisis numérico del método | ⬜ |
-| 5 | Datos de mercado (yfinance ^SPX) | ⬜ |
-| 6 | Calibración (MSE, dual_annealing) | ⬜ |
+| 4 | Análisis numérico del método | 🟡 (script listo) |
+| 5 | Datos de mercado (yfinance **SPY**, ver D7) | 🟡 (datos listos) |
+| 6 | Calibración (MSE, dual_annealing) | 🟡 (código listo) |
 | 7 | Trabajo escrito (Typst) | ⬜ |
 | 8 | Diapositivas (reveal.js) + ensayo | ⬜ |
 
@@ -54,9 +54,20 @@ Nota: exportación de slides a PDF se verifica en Etapa 8 (requiere navegador, n
 
 ## Etapa 3 — Verificación Monte Carlo + figuras del artículo
 
-- ⬜ Semi-Monte-Carlo (simular cadena de Markov + fórmula condicional)
-- ⬜ Reproducir Figs. 1-3 del artículo (parámetros §3)
-- ⬜ Tabla de errores relativos fórmula vs MC
+- ✅ Semi-Monte-Carlo (cadena de Markov + cf condicional) y Euler completo independiente
+- ✅ Figs. 01 (degeneración), 03 (precio vs z, precio vs vencimiento) generadas y revisadas
+- 🟡 Script 02 (fórmula vs MC, tabla de errores) corriendo — pendiente su figura/tabla
+- ✅ 4 tests MC verdes (semi-MC vs fórmula, Euler vs fórmula, reproducibilidad, cadena)
+
+## Nota — cambio de fuente de datos (D7)
+^SPX fuera de horario solo da calls ITM válidas → cambiado a **SPY** (cobertura completa
+OTM/ATM/ITM). Opciones americanas ≈ europeas para calls de corto plazo (limitación documentada).
+Dividendos q estimados por paridad put-call (D8). 650 contratos → 325 in / 325 out.
+
+## Etapas 4-6 — código listo, pendiente ejecución/commit
+- Etapa 4: scripts/04_numerical_analysis.py (convergencia, truncamiento, integrando, costo)
+- Etapa 5: market_data.py + scripts/05 (SPY, filtros, q por paridad) — datos ya generados
+- Etapa 6: calibration.py + scripts/06 (Heston y Lin-He, MSE, dual_annealing, in/out/moneyness)
 
 ## Bloqueantes
 

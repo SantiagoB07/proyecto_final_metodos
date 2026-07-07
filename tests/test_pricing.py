@@ -8,6 +8,7 @@ from rsheston.pricing import (
     black_scholes_call,
     black_scholes_put,
     gil_pelaez_call,
+    gil_pelaez_calls,
     implied_vol,
 )
 
@@ -113,6 +114,18 @@ def test_heston_convergence_self_consistency():
     price = gil_pelaez_call(cf, S, K, r, tau)
     price_fine = gil_pelaez_call(cf, S, K, r, tau, u_max=400.0, n_nodes=1024)
     assert price == pytest.approx(price_fine, abs=1e-4)
+
+
+@pytest.mark.parametrize("q", [0.0, 0.02])
+def test_multi_strike_matches_single(q):
+    """gil_pelaez_calls (vectorizado) coincide con gil_pelaez_call strike por strike."""
+    S, r, tau = 100.0, 0.04, 0.4
+    params = HestonParams(kappa=3.0, theta=0.05, sigma=0.5, rho=-0.6, v0=0.04)
+    cf = make_heston_cf(S=S, tau=tau, r=r, params=params, q=q)
+    Ks = np.array([90.0, 95.0, 100.0, 105.0, 110.0])
+    multi = gil_pelaez_calls(cf, S, Ks, r, tau, q=q)
+    single = np.array([gil_pelaez_call(cf, S, K, r, tau, q=q) for K in Ks])
+    assert np.allclose(multi, single, atol=1e-10)
 
 
 def test_heston_put_call_parity():

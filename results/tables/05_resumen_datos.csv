@@ -1,0 +1,14 @@
+metrica,valor
+spot_S,751.28
+tasa_r,0.0369
+q_min,-0.0121
+q_max,0.0029
+n_contratos,650
+n_vencimientos,6
+dias_min,31
+dias_max,85
+strikes_min,683
+strikes_max,834
+n_OTM,197
+n_ATM,252
+n_ITM,201
