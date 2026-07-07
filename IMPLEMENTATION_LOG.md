@@ -66,3 +66,14 @@ dividendos (idéntica con q=0). Sin errores reales.
   Heston ya ajusta bien la sonrisa. Difiere del artículo, que calibra un PANEL de 6 meses donde
   el régimen captura variación entre fechas. Es un resultado honesto y se discute en el paper.
 - Limitación: yfinance solo da la cadena actual (un snapshot), no un panel histórico.
+
+## Etapa 7 — Trabajo escrito (Typst) ✅
+- paper/main.typ: 13 páginas (12 de cuerpo + anexo). Las 10 secciones de la rúbrica, con la
+  derivación completa (PDE Feynman-Kac, ODEs, D/Cbar/f/M explícitas), tablas desde CSV, figuras
+  de results/, discusión crítica y anexo de código. Compila con `typst compile --root .`.
+
+## Etapa 8 — Diapositivas (reveal.js) ✅
+- slides/index.html: 16 diapositivas (motivación, modelo, derivación en 2 etapas, verificación,
+  hallazgo numérico, datos, calibración, discusión, conclusiones) con KaTeX y figuras.
+- Exportado a slides/slides.pdf con decktape (--no-sandbox por el sandbox del contenedor).
+- scripts/07_make_all.py: reproduce todas las figuras/tablas de principio a fin.

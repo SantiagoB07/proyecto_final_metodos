@@ -5,33 +5,211 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Valoración de opciones — Modelo Heston de dos factores con cambio de régimen</title>
 
-    <!-- reveal.js desde CDN. Para presentar sin internet, reemplazar por copia local
-         (ver docs/plan.md §8). -->
+    <!-- reveal.js desde CDN. Para presentar sin internet, vendorizar en slides/vendor/. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+    <style>
+      .reveal section img { border: none; box-shadow: none; background: white; }
+      .reveal h1, .reveal h2, .reveal h3 { color: #1a3a5c; text-transform: none; }
+      .reveal { font-size: 30px; }
+      .reveal .small { font-size: 0.7em; }
+      .reveal .cols { display: flex; gap: 1em; align-items: center; }
+      .reveal .cols > div { flex: 1; }
+      .footer { position: fixed; bottom: 8px; left: 12px; font-size: 12px; color: #888; }
+    </style>
   </head>
   <body>
     <div class="reveal">
       <div class="slides">
+        <!-- 1 -->
         <section>
           <h2>Valoración analítica de opciones europeas</h2>
           <h3>Modelo Heston de dos factores con cambio de régimen</h3>
-          <p><small>Lin &amp; He (2021) — Métodos Numéricos en Finanzas · UNAL 2026-I</small></p>
+          <p class="small">Implementación, verificación y calibración — Lin &amp; He (2021)</p>
+          <p class="small">Métodos Numéricos en Finanzas · Maestría en Actuaría y Finanzas · UNAL 2026-I</p>
         </section>
 
+        <!-- 2 -->
         <section>
-          <h3>Motivación</h3>
-          <p>TODO: volatility smile, límites de Black–Scholes y de Heston.</p>
+          <h3>Motivación: la sonrisa de volatilidad</h3>
+          <div class="cols">
+            <div>
+              <ul>
+                <li>Black–Scholes supone volatilidad constante.</li>
+                <li>El mercado exhibe <em>skew</em>: la IV depende del strike.</li>
+                <li>La volatilidad estocástica (Heston) lo captura y mantiene fórmula cerrada.</li>
+              </ul>
+            </div>
+            <div><img src="assets/05_sonrisa_volatilidad.png" /></div>
+          </div>
         </section>
 
+        <!-- 3 -->
+        <section>
+          <h3>De Heston al cambio de régimen</h3>
+          <ul>
+            <li>Heston con parámetros constantes ajusta imperfectamente.</li>
+            <li>Evidencia empírica: la volatilidad cambia de <em>régimen</em> con los ciclos.</li>
+            <li>He &amp; Zhu (2016): régimen en la vol-of-vol, pero solo fórmula <em>aproximada</em>.</li>
+            <li><strong>Lin &amp; He (2021):</strong> régimen en la vol-of-vol con fórmula cerrada <em>exacta</em>.</li>
+          </ul>
+        </section>
+
+        <!-- 4 -->
         <section>
           <h3>El modelo</h3>
-          <p>TODO: dinámica de dos factores + cadena de Markov.</p>
-          <p>\[ dv = k(\theta - v)\,dt + \sigma\sqrt{v}\,dW^2 + \lambda_{X_t}\,dB \]</p>
+          <p>\[ \frac{dS_t}{S_t} = r\,dt + \sqrt{v_t}\,dW_t^1 \]</p>
+          <p>\[ dv = k(\theta - v)\,dt + \sigma\sqrt{v}\,dW_t^2 + \lambda_{X_t}\,dB_t \]</p>
+          <ul class="small">
+            <li>\(\mathrm{corr}(W^1,W^2)=\rho\); \(B_t\) independiente.</li>
+            <li>\(X_t\): cadena de Markov de 2 estados \(\Rightarrow \lambda_{X_t}\in\{\lambda_1,\lambda_2\}\).</li>
+            <li>\(\lambda_1=\lambda_2=0 \Rightarrow\) se recupera Heston exactamente.</li>
+            <li>El término \(\lambda_{X_t}dB_t\) rompe la condición de Feller.</li>
+          </ul>
         </section>
 
-        <!-- TODO: derivación en 2 pasos, verificación, datos, calibración,
-             comparación con el original, conclusiones (15-20 slides). -->
+        <!-- 5 -->
+        <section>
+          <h3>El reto: función característica en dos etapas</h3>
+          <p>La cadena de Markov hace intratable la derivación directa. Regla de la torre:</p>
+          <p>\[ m(\phi) = \mathbb{E}\big[\, \mathbb{E}[e^{j\phi y_T} \mid X_T]\, \big] \]</p>
+          <ol>
+            <li><strong>Condicional</strong> a la trayectoria de \(X_t\): \(\lambda_t\) determinista.</li>
+            <li><strong>Esperanza</strong> sobre la cadena de Markov.</li>
+          </ol>
+        </section>
+
+        <!-- 6 -->
+        <section>
+          <h3>Etapa 1: función característica condicional</h3>
+          <p>Feynman–Kac + ansatz afín \(h = e^{C + Dv + j\phi y}\) \(\Rightarrow\) Riccati:</p>
+          <p>\[ \frac{\partial D}{\partial\tau} = \tfrac12\sigma^2 D^2 + (j\phi\rho\sigma - k)D - \tfrac12(j\phi+\phi^2) \]</p>
+          <p class="small">Solución cerrada \(D(\phi;\tau)\); la parte de Heston de \(C\) por integración; el término de régimen define \(f(\phi;\tau)=\int_0^\tau D^2\,du\).</p>
+        </section>
+
+        <!-- 7 -->
+        <section>
+          <h3>Etapa 2: esperanza sobre la cadena</h3>
+          <p>Resultado de Elliott–Lian (2013): exponencial matricial</p>
+          <p>\[ \mathbb{E}\big[e^{\frac12\int \lambda_s^2 D^2 ds}\mid X_t\big] = \langle e^M X_t, I\rangle \]</p>
+          <p>\[ M = A^T\tau + \mathrm{diag}\!\left(\tfrac12\lambda_1^2 f,\ \tfrac12\lambda_2^2 f\right) \]</p>
+          <p class="small">Implementación: \(e^M\) en forma cerrada \(2\times2\) (autovalores), combinada con el exponente de Heston para evitar desbordamiento.</p>
+        </section>
+
+        <!-- 8 -->
+        <section>
+          <h3>Precio por inversión de Gil-Pelaez</h3>
+          <p>\[ U = e^{-r\tau}\big[\, m(-j)\,P_1 - K\,P_2 \,\big] \]</p>
+          <p class="small">\[ P_{1,2} = \tfrac12 + \tfrac1\pi\int_0^\infty \mathrm{Re}\!\left[\frac{e^{-j\phi\ln K}}{j\phi}(\cdot)\right]d\phi \]</p>
+          <p class="small">Cuadratura de Gauss-Legendre truncada; \(m(-j)=Se^{(r-q)\tau}\) analítico (evita la singularidad).</p>
+        </section>
+
+        <!-- 9 -->
+        <section>
+          <h3>Verificación (1): degeneración a Heston</h3>
+          <div class="cols">
+            <div class="small">
+              <ul>
+                <li>Con \(\lambda\to 0\), el precio coincide <em>exactamente</em> con Heston.</li>
+                <li>Con \(\sigma\to0,\ v_0=\theta\): Heston \(\to\) Black–Scholes.</li>
+                <li>\(f(\phi;\tau)\) validada contra \(\int D^2\) numérico.</li>
+              </ul>
+            </div>
+            <div><img src="assets/01_degeneracion_heston.png" /></div>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section>
+          <h3>Verificación (2): Monte Carlo</h3>
+          <div class="cols">
+            <div class="small">
+              <ul>
+                <li><strong>Euler completo:</strong> independiente de la fórmula.</li>
+                <li><strong>semi-MC</strong> (del artículo): simula la cadena, valora con la cf condicional.</li>
+                <li>Error relativo máx. \(\sim 10^{-3}\%\) (artículo: &lt; 0.7%).</li>
+              </ul>
+            </div>
+            <div><img src="assets/02_formula_vs_montecarlo.png" /></div>
+          </div>
+        </section>
+
+        <!-- 11 -->
+        <section>
+          <h3>Hallazgo numérico: la cf no está acotada</h3>
+          <div class="cols">
+            <div class="small">
+              <ul>
+                <li>Feller violada \(\Rightarrow |m(\phi)|\) crece en la cola.</li>
+                <li>Un truncamiento fijo grande corrompe el precio.</li>
+                <li>Solución: <strong>truncamiento adaptativo</strong> en la región de decaimiento.</li>
+                <li>No discutido en el artículo original.</li>
+              </ul>
+            </div>
+            <div><img src="assets/04_integrando.png" /></div>
+          </div>
+        </section>
+
+        <!-- 12 -->
+        <section>
+          <h3>Datos de mercado</h3>
+          <ul class="small">
+            <li>Opciones de <strong>SPY</strong> (S&amp;P 500) vía yfinance; SPX fuera de horario solo daba ITM.</li>
+            <li>Filtros del artículo: 30–90 días, \(|S-K|/K&lt;10\%\), precio = mid bid-ask.</li>
+            <li>Tasa: T-Bill 13 semanas (^IRX). Dividendos \(q\) por paridad put-call.</li>
+            <li>650 contratos \(\to\) 325 in-sample / 325 out-of-sample; cobertura OTM/ATM/ITM.</li>
+            <li><span class="small">Limitación: opciones de SPY son americanas (\(\approx\) europeas en corto plazo).</span></li>
+          </ul>
+        </section>
+
+        <!-- 13 -->
+        <section>
+          <h3>Calibración</h3>
+          <p>\[ \mathrm{MSE} = \frac1N\sum_{i=1}^N (C_i^{\text{mercado}} - C_i^{\text{modelo}})^2 \]</p>
+          <ul class="small">
+            <li>Optimización global: <code>dual_annealing</code> (análogo al ASA del artículo).</li>
+            <li>Lin–He con <em>warm-start</em> desde Heston (\(\lambda\approx0\)) + pulido local.</li>
+            <li>Garantiza el anidamiento: \(\mathrm{MSE}(\text{Lin–He})\le\mathrm{MSE}(\text{Heston})\).</li>
+          </ul>
+        </section>
+
+        <!-- 14 -->
+        <section>
+          <h3>Resultados de la calibración</h3>
+          <div class="cols">
+            <div class="small">
+              <ul>
+                <li>MSE in-sample: Heston = Lin–He = 0.0435.</li>
+                <li>El optimizador lleva \(\lambda\to 0\): Lin–He se reduce a Heston.</li>
+                <li>Curvas de precio indistinguibles.</li>
+              </ul>
+            </div>
+            <div><img src="assets/06_ajuste_calibracion.png" /></div>
+          </div>
+        </section>
+
+        <!-- 15 -->
+        <section>
+          <h3>Discusión: ¿por qué no mejora aquí?</h3>
+          <ul>
+            <li>El artículo calibra un <strong>panel de 6 meses</strong>: el régimen captura la variación <em>entre fechas</em>.</li>
+            <li>Nosotros: un <strong>solo corte transversal</strong> (un día). Heston ya ajusta bien la sonrisa.</li>
+            <li>La ventaja del régimen es un fenómeno de <em>serie temporal</em>, no de corte transversal.</li>
+            <li>Limitación: yfinance solo da la cadena actual, no un panel histórico.</li>
+          </ul>
+        </section>
+
+        <!-- 16 -->
+        <section>
+          <h3>Conclusiones</h3>
+          <ul>
+            <li>Implementación reproducible y <strong>verificada</strong> (degeneración, \(\int D^2\), 2× Monte Carlo).</li>
+            <li>Aporte propio: análisis del truncamiento y la <strong>cf no acotada</strong> (Feller).</li>
+            <li>Empíricamente, el régimen requiere un panel multi-fecha para mostrar su ventaja.</li>
+            <li>Extensiones: panel histórico, modelo Elliott–Lian, ejercicio americano.</li>
+          </ul>
+          <p class="small">Código y trabajo escrito reproducibles (uv + Typst). ¡Gracias!</p>
+        </section>
       </div>
     </div>
 
@@ -40,6 +218,7 @@
     <script>
       Reveal.initialize({
         hash: true,
+        slideNumber: "c/t",
         plugins: [RevealMath.KaTeX],
       });
     </script>

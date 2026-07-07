@@ -15,9 +15,9 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | 3 | Verificación Monte Carlo + figuras del artículo | ✅ |
 | 4 | Análisis numérico del método | ✅ |
 | 5 | Datos de mercado (yfinance **SPY**, ver D7) | ✅ |
-| 6 | Calibración (MSE, dual_annealing) | 🟡 (código listo, falta ejecutar) |
-| 7 | Trabajo escrito (Typst) | 🟡 (borrador, faltan resultados calibración) |
-| 8 | Diapositivas (reveal.js) + ensayo | ⬜ |
+| 6 | Calibración (MSE, dual_annealing) | ✅ |
+| 7 | Trabajo escrito (Typst) | ✅ (13 págs, 12 de cuerpo) |
+| 8 | Diapositivas (reveal.js) + PDF | ✅ (16 diapositivas, PDF exportado) |
 
 ## Etapa 0 — Infraestructura ✅
 
