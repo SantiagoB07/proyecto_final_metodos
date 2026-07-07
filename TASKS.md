@@ -11,8 +11,8 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | --- | --- | --- |
 | 0 | Infraestructura (uv, layout, tooling) | ✅ |
 | 1 | Pricer de referencia (Black–Scholes, Heston) | ✅ |
-| 2 | Pricer del modelo Lin–He | 🟡 |
-| 3 | Verificación Monte Carlo + figuras del artículo | ⬜ |
+| 2 | Pricer del modelo Lin–He | ✅ |
+| 3 | Verificación Monte Carlo + figuras del artículo | 🟡 |
 | 4 | Análisis numérico del método | ⬜ |
 | 5 | Datos de mercado (yfinance ^SPX) | ⬜ |
 | 6 | Calibración (MSE, dual_annealing) | ⬜ |
@@ -41,12 +41,22 @@ Nota: exportación de slides a PDF se verifica en Etapa 8 (requiere navegador, n
   Heston→BS (σ→0) en 5 strikes, GL vs quad adaptativo, convergencia
 - Decisión D5: m(-j) se calcula analíticamente como S·e^{(r-q)τ} (singularidad removible en φ=-j)
 
-## Etapa 2 — Pricer del modelo Lin–He
+## Etapa 2 — Pricer del modelo Lin–He ✅
 
-- ⬜ f(φ;τ) (ec. 2.19), matriz M (ec. 2.18), factor ⟨e^M X_t, I⟩ vía expm
-- ⬜ Función característica m(φ) del modelo Lin–He (ec. 2.20)
-- ⬜ pricer reutilizando Gil-Pelaez
-- ⬜ Tests: degeneración a Heston (λ₁=λ₂=0), m(0)=1, verificar erratas del artículo
+- ✅ f(φ;τ) (ec. 2.19) — VALIDADA contra integral numérica de D²
+- ✅ Matriz M (ec. 2.18) + expm 2×2 en forma cerrada vectorizada (vs scipy.linalg.expm)
+- ✅ Función característica m(φ) (ec. 2.20) con forma estable (autovalores μ±) anti-overflow
+- ✅ Truncamiento adaptativo en Gil-Pelaez (D6: la cf no está acotada, explota en la cola)
+- ✅ 20 tests nuevos: degeneración exacta a Heston (cf y precio en 5 strikes), m(0)=1,
+  expm vs scipy, f vs ∫D², truncamiento adaptativo, monotonía en S
+- Erratas del artículo detectadas: M(2,2) sin τ (corregida), pie Fig.1 "variance swap"
+- Decisión D6: truncamiento adaptativo por la cf no acotada (violación de Feller)
+
+## Etapa 3 — Verificación Monte Carlo + figuras del artículo
+
+- ⬜ Semi-Monte-Carlo (simular cadena de Markov + fórmula condicional)
+- ⬜ Reproducir Figs. 1-3 del artículo (parámetros §3)
+- ⬜ Tabla de errores relativos fórmula vs MC
 
 ## Bloqueantes
 

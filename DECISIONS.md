@@ -24,3 +24,8 @@ Decisiones importantes tomadas durante la implementación, con su justificación
 ## D5 — m(-j) analítico en el valuador de Gil-Pelaez
 **Decisión:** el valuador calcula `m(-j) = S·e^{(r-q)τ}` analíticamente en vez de evaluar la fórmula cerrada de la función característica en φ=-j.
 **Por qué:** la fórmula tiene una singularidad removible en φ=0 y φ=-j (allí `a+d=0` y `g` diverge → nan). Como `m(-j)=E[S_T]` vale para cualquier modelo martingala, calcularlo analíticamente es exacto y robusto, y sirve para Heston y Lin–He por igual. Los nodos de Gauss-Legendre son reales positivos, así que nunca tocan la singularidad.
+
+## D6 — Truncamiento adaptativo en Gil-Pelaez (cf no acotada del modelo)
+**Decisión:** el valuador trunca la integral de Gil-Pelaez donde `|m(φ)|` ya decayó por debajo de una tolerancia, en vez de usar un límite superior fijo.
+**Por qué:** al romperse la condición de Feller (el término λ·dB permite varianza negativa), la función característica FORMAL del modelo no está acotada por 1 como una cf genuina: decae a frecuencias moderadas pero **crece exponencialmente en la cola** (verificado: con λ=(0.01,0.05) y T=0.5, |m| baja a 1e-40 en φ≈120 y sube a 1e+25 en φ=200). Un u_max fijo demasiado grande contamina el precio. El truncamiento adaptativo elige u_max en la región de decaimiento (antes de la explosión), dando precios estables. Para λ calibrado (~0.045) la explosión está lejísimos en la cola y el precio es estable en cualquier u_max razonable.
+**Consecuencia:** este comportamiento se analiza y documenta en la Etapa 4 (análisis numérico) y se conecta con la discusión de la violación de Feller (limitación del modelo). El parámetro `adaptive=False` permite estudiar la convergencia con u_max fijo.

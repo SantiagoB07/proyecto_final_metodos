@@ -28,6 +28,7 @@ from scipy.stats import norm
 # justifica estos valores estudiando convergencia frente al truncamiento y el número de nodos.
 DEFAULT_U_MAX = 200.0
 DEFAULT_N_NODES = 256
+DEFAULT_TRUNC_TOL = 1e-12  # tolerancia para el truncamiento adaptativo (ver D6)
 
 
 def black_scholes_call(S, K, r, tau, sigma, q=0.0):
@@ -73,6 +74,36 @@ def implied_vol(price, S, K, r, tau, q=0.0, is_call=True, tol=1e-8, max_sigma=5.
         return np.nan
 
 
+def adaptive_truncation(cf: Callable, u_cap=DEFAULT_U_MAX, tol=DEFAULT_TRUNC_TOL, n_probe=300):
+    """Elige un límite de truncamiento en la región de decaimiento de ``|m(phi)|`` (ver D6).
+
+    La función característica del modelo de Lin & He no está acotada: decae a frecuencias
+    moderadas pero crece en la cola (violación de Feller). Se sondea ``|m(phi)|`` en una malla
+    y se trunca en el primer punto donde cae por debajo de ``tol``; si nunca lo hace (empieza a
+    crecer antes), se trunca en el mínimo, evitando la región de explosión.
+
+    Args:
+        cf: función característica de una variable.
+        u_cap: frecuencia máxima a considerar (tope del sondeo).
+        tol: umbral de magnitud por debajo del cual el aporte es despreciable.
+        n_probe: número de puntos de sondeo.
+
+    Returns:
+        Límite superior de truncamiento efectivo (float).
+    """
+    phi = np.linspace(u_cap / n_probe, u_cap, n_probe)
+    with np.errstate(over="ignore", invalid="ignore"):
+        mag = np.abs(cf(phi))
+    finite = np.isfinite(mag)
+    below = np.nonzero(finite & (mag < tol))[0]
+    if below.size:
+        return float(phi[below[0]])
+    # No baja de tol antes de explotar: truncar en el mínimo de la región finita (fin del
+    # decaimiento, antes de la explosión de la cola). Los valores no finitos se enmascaran.
+    mag_masked = np.where(finite, mag, np.inf)
+    return float(phi[np.argmin(mag_masked)])
+
+
 def gil_pelaez_call(
     cf: Callable,
     S,
@@ -82,6 +113,8 @@ def gil_pelaez_call(
     q=0.0,
     u_max=DEFAULT_U_MAX,
     n_nodes=DEFAULT_N_NODES,
+    adaptive=True,
+    tol=DEFAULT_TRUNC_TOL,
 ):
     """Precio de una call europea por inversión de Gil-Pelaez.
 
@@ -90,12 +123,18 @@ def gil_pelaez_call(
             de aceptar argumentos complejos (se evalúa en ``phi``, ``phi - j`` y ``-j``).
         S, K, r, tau: subyacente, strike, tasa y tiempo al vencimiento.
         q: rendimiento por dividendos.
-        u_max: límite superior de truncamiento de la integral.
+        u_max: límite superior de truncamiento (tope del sondeo si ``adaptive=True``).
         n_nodes: número de nodos de la cuadratura de Gauss-Legendre.
+        adaptive: si True, elige el truncamiento en la región de decaimiento (ver D6);
+            si False, usa ``u_max`` fijo (útil para estudios de convergencia, Etapa 4).
+        tol: tolerancia del truncamiento adaptativo.
 
     Returns:
         Precio de la call (float).
     """
+    if adaptive:
+        u_max = adaptive_truncation(cf, u_cap=u_max, tol=tol)
+
     # Nodos y pesos de Gauss-Legendre mapeados de [-1, 1] a [0, u_max]. Los nodos son
     # interiores, así que phi nunca es exactamente 0 y se evita la singularidad de 1/(j*phi).
     x, w = np.polynomial.legendre.leggauss(n_nodes)
