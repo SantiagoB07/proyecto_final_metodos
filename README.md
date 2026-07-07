@@ -27,7 +27,7 @@ uv sync          # crea .venv e instala dependencias exactas desde uv.lock
 uv run pytest                                 # verificación automatizada
 uv run python scripts/05_get_data.py          # descargar y guardar snapshot de datos
 uv run python scripts/07_make_all.py          # reproducir todas las figuras y tablas
-typst compile paper/main.typ paper/main.pdf   # compilar el trabajo escrito
+typst compile --root . paper/main.typ paper/main.pdf   # compilar el trabajo escrito
 ```
 
 ## Estructura

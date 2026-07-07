@@ -21,15 +21,19 @@ import csv
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+import numpy as np
 
-from rsheston.io_paths import DATA_RAW, RESULTS_TABLES, ensure_dirs  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import plt, setup_style  # noqa: E402
+
+from rsheston.io_paths import DATA_RAW, RESULTS_FIGURES, RESULTS_TABLES, ensure_dirs  # noqa: E402
 from rsheston.market_data import (  # noqa: E402
     clean_option_data,
     download_option_chain,
     moneyness_bucket,
     save_processed,
 )
+from rsheston.pricing import implied_vol  # noqa: E402
 
 
 def main(force=False):
@@ -79,6 +83,25 @@ def main(force=False):
         for b in ["OTM", "ATM", "ITM"]:
             w.writerow([f"n_{b}", int((clean["bucket"] == b).sum())])
     print(f"Resumen guardado: {summary.name}")
+
+    # Figura: sonrisa/superficie de volatilidad implícita del conjunto limpio.
+    setup_style()
+    clean["iv"] = clean.apply(
+        lambda x: implied_vol(x.price, x.S, x.K, x.r, x.tau, q=x.q, is_call=True), axis=1
+    )
+    fig, ax = plt.subplots()
+    for days, grp in clean.groupby("days"):
+        g = grp.dropna(subset=["iv"]).sort_values("K")
+        if len(g) > 2:
+            ax.plot(g["K"] / g["S"], g["iv"], "o-", markersize=3, label=f"{int(days)} días")
+    ax.set_xlabel("Moneyness $K/S$")
+    ax.set_ylabel("Volatilidad implícita")
+    ax.set_title("Superficie de volatilidad implícita (SPY, datos limpios)")
+    ax.legend(title="Vencimiento", fontsize=8)
+    fig.tight_layout()
+    out_fig = RESULTS_FIGURES / "05_sonrisa_volatilidad.png"
+    fig.savefig(out_fig)
+    print(f"Figura de sonrisa guardada: {out_fig.name}")
 
 
 if __name__ == "__main__":

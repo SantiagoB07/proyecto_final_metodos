@@ -85,7 +85,7 @@ uv sync                                    # crear/actualizar el venv desde uv.l
 uv run python scripts/05_get_data.py       # descargar y guardar snapshot de datos
 uv run python scripts/07_make_all.py       # reproducir todas las figuras y tablas
 uv run pytest                              # correr la verificación automatizada
-typst compile paper/main.typ               # compilar el trabajo escrito a PDF
+typst compile --root . paper/main.typ      # compilar el trabajo escrito a PDF (--root para leer results/)
 typst watch paper/main.typ                 # vista previa en vivo del paper
 npx serve slides                           # servir las diapositivas localmente
 npx decktape reveal http://localhost:3000 slides/slides.pdf   # exportar slides a PDF
