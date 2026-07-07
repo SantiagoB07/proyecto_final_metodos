@@ -1,0 +1,3 @@
+modelo,in_sample_mse,out_of_sample_mse
+Heston,0.0435,0.1886
+Lin-He,0.0435,0.1885

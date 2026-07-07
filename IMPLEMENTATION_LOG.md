@@ -46,3 +46,23 @@ dividendos (idéntica con q=0). Sin errores reales.
 - Figura 02 (fórmula vs MC en 9 valores de S): error relativo máximo 0.0005%. Completa ✅.
 - Optimización: cache de nodos Gauss-Legendre (leggauss es O(n²)) → suite de tests 22s→5s,
   y calibración/semi-MC mucho más rápidos.
+
+## Etapa 4 — Análisis numérico ✅
+- Convergencia vs nodos (9e-3 con 8 → 2e-10 con 256); meseta de truncamiento estable ~0.8663.
+- Figura de truncamiento ilustra la explosión de la cola (D6/Feller); adaptativo en la meseta.
+- Costo: Heston 0.26 ms/precio, Lin-He 0.50 ms/precio.
+
+## Etapa 5 — Datos de mercado ✅
+- SPY (D7), 650 contratos → 325 in / 325 out; q por paridad put-call (D8), rango -1.2% a +0.3%.
+- Cobertura OTM(98)/ATM(124)/ITM(103), sonrisa clara, 0 NaN en IV.
+
+## Etapa 6 — Calibración ✅
+- Primer intento (cold start): Lin-He MSE 3.04 > Heston 0.0435 → VIOLA el anidamiento
+  (mínimo local malo con 9 parámetros). La verificación lo detectó.
+- Corrección: warm-start de Lin-He desde Heston con λ≈0 + pulido local (L-BFGS-B) desde varios
+  puntos, conservando el mejor. Garantiza MSE(Lin-He) ≤ MSE(Heston).
+- Resultado: **Lin-He converge a λ=0 y coincide con Heston** (MSE in=0.0435, out≈0.1886).
+  HALLAZGO: en un único corte transversal (un día de SPY) el factor de régimen no aporta;
+  Heston ya ajusta bien la sonrisa. Difiere del artículo, que calibra un PANEL de 6 meses donde
+  el régimen captura variación entre fechas. Es un resultado honesto y se discute en el paper.
+- Limitación: yfinance solo da la cadena actual (un snapshot), no un panel histórico.

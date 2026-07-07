@@ -16,7 +16,7 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import dual_annealing
+from scipy.optimize import dual_annealing, minimize
 
 from .charfn import HestonParams, LinHeParams, make_heston_cf, make_linhe_cf
 from .pricing import gil_pelaez_calls
@@ -90,30 +90,58 @@ def mse_objective(theta_vec, data: pd.DataFrame, spec: ModelSpec):
     """Error cuadrático medio en dólares (ec. 4.1). Penaliza parámetros que fallan numéricamente."""
     theta = dict(zip(spec.param_names, theta_vec))
     try:
-        model = model_prices(theta, data, spec)
+        with np.errstate(over="ignore", invalid="ignore"):
+            model = model_prices(theta, data, spec)
     except (FloatingPointError, ValueError):
         return 1e12
     if not np.all(np.isfinite(model)):
         return 1e12
     market = data["price"].to_numpy()
-    return float(np.mean((market - model) ** 2))
+    with np.errstate(over="ignore", invalid="ignore"):
+        mse = float(np.mean((market - model) ** 2))
+    return mse if np.isfinite(mse) else 1e12
 
 
-def calibrate(data: pd.DataFrame, spec: ModelSpec, seed=12345, maxiter=200, x0=None):
-    """Calibra ``spec`` a ``data`` minimizando el MSE con dual_annealing (optimización global).
+def _local_refine(x0, data, spec):
+    """Pulido local (L-BFGS-B) desde ``x0`` dentro de las cotas. Devuelve (x, fun)."""
+    res = minimize(
+        mse_objective, np.asarray(x0, dtype=float), args=(data, spec),
+        method="L-BFGS-B", bounds=spec.bounds,
+    )
+    return res.x, float(res.fun)
+
+
+def calibrate(data: pd.DataFrame, spec: ModelSpec, seed=12345, maxiter=200, x0=None,
+              extra_starts=None):
+    """Calibra ``spec`` minimizando el MSE con dual_annealing (global) + pulido local.
+
+    Args:
+        x0: punto inicial para dual_annealing (p. ej. warm-start desde otro modelo).
+        extra_starts: lista de puntos adicionales desde los que hacer pulido local; se conserva
+            el mejor resultado global. Sirve para garantizar propiedades de anidamiento
+            (p. ej. iniciar Lin-He en la solución de Heston con lambda=0).
 
     Returns:
-        dict con: params (dict), mse, resultado (OptimizeResult), spec, seed, x0, bounds.
+        dict con: params, mse, resultado, spec, seed, x0, bounds.
     """
     data = data.reset_index(drop=True)
     result = dual_annealing(
         mse_objective, bounds=spec.bounds, args=(data, spec), seed=seed, maxiter=maxiter, x0=x0,
     )
-    params = dict(zip(spec.param_names, result.x))
+    best_x, best_f = result.x, float(result.fun)
+
+    # Pulido local desde el óptimo global y desde puntos de inicio adicionales; se conserva el mejor.
+    starts = [best_x] + ([x0] if x0 is not None else []) + list(extra_starts or [])
+    for s in starts:
+        xr, fr = _local_refine(s, data, spec)
+        if fr < best_f:
+            best_x, best_f = xr, fr
+
+    params = dict(zip(spec.param_names, best_x))
     return {
         "model": spec.name,
         "params": params,
-        "mse": float(result.fun),
+        "mse": best_f,
         "result": result,
         "seed": seed,
         "x0": x0,

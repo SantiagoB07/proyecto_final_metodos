@@ -20,9 +20,11 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import plt, setup_style  # noqa: E402
 
 from rsheston.calibration import (  # noqa: E402
     HESTON_SPEC,
@@ -30,8 +32,14 @@ from rsheston.calibration import (  # noqa: E402
     calibrate,
     evaluate_by_moneyness,
     evaluate_mse,
+    model_prices,
 )
-from rsheston.io_paths import DATA_PROCESSED, RESULTS_TABLES, ensure_dirs  # noqa: E402
+from rsheston.io_paths import (  # noqa: E402
+    DATA_PROCESSED,
+    RESULTS_FIGURES,
+    RESULTS_TABLES,
+    ensure_dirs,
+)
 
 MAXITER = 150
 SEED = 12345
@@ -45,14 +53,34 @@ def main():
 
     specs = [HESTON_SPEC, LINHE_SPEC]
     calibs = {}
-    for spec in specs:
-        t0 = time.perf_counter()
-        cal = calibrate(insample, spec, seed=SEED, maxiter=MAXITER)
-        dt = time.perf_counter() - t0
-        calibs[spec.name] = cal
-        print(f"\n[{spec.name}] MSE in-sample={cal['mse']:.4f}  ({dt:.1f}s)")
-        for k, v in cal["params"].items():
-            print(f"    {k:9s} = {v:.4f}")
+
+    # 1) Heston.
+    t0 = time.perf_counter()
+    calibs["Heston"] = calibrate(insample, HESTON_SPEC, seed=SEED, maxiter=MAXITER)
+    print(f"\n[Heston] MSE in-sample={calibs['Heston']['mse']:.4f}  "
+          f"({time.perf_counter() - t0:.1f}s)")
+    for k, v in calibs["Heston"]["params"].items():
+        print(f"    {k:9s} = {v:.4f}")
+
+    # 2) Lin-He: warm-start desde Heston con lambda~0 (garantiza MSE <= Heston por anidamiento).
+    hp = calibs["Heston"]["params"]
+    embedded = [hp["kappa"], hp["theta"], hp["sigma"], hp["rho"], hp["v0"], 0.0, 0.0, 5.0, 5.0]
+    x0 = [hp["kappa"], hp["theta"], hp["sigma"], hp["rho"], hp["v0"], 0.02, 0.02, 5.0, 5.0]
+    t0 = time.perf_counter()
+    calibs["Lin-He"] = calibrate(
+        insample, LINHE_SPEC, seed=SEED, maxiter=MAXITER, x0=x0, extra_starts=[embedded],
+    )
+    print(f"\n[Lin-He] MSE in-sample={calibs['Lin-He']['mse']:.4f}  "
+          f"({time.perf_counter() - t0:.1f}s)")
+    for k, v in calibs["Lin-He"]["params"].items():
+        print(f"    {k:9s} = {v:.4f}")
+
+    # Verificación de anidamiento: Lin-He debe ajustar al menos tan bien como Heston.
+    if calibs["Lin-He"]["mse"] > calibs["Heston"]["mse"] + 1e-6:
+        print("  ADVERTENCIA: MSE(Lin-He) > MSE(Heston); el anidamiento no se cumplió.")
+    else:
+        print(f"  OK anidamiento: MSE(Lin-He)={calibs['Lin-He']['mse']:.4f} "
+              f"<= MSE(Heston)={calibs['Heston']['mse']:.4f}")
 
     # Tabla 1: parámetros estimados.
     all_names = LINHE_SPEC.param_names
@@ -89,6 +117,23 @@ def main():
             w.writerow([spec.name] + [f"{by.get(b, float('nan')):.4f}" for b in ["OTM", "ATM", "ITM"]])
 
     print(f"\nTablas guardadas en {RESULTS_TABLES.name}/ (06_parametros, 06_errores, 06_errores_moneyness)")
+
+    # Figura de ajuste: precios de mercado vs modelo para el vencimiento más corto (in-sample).
+    setup_style()
+    d0 = insample["days"].min()
+    sub = insample[insample["days"] == d0].sort_values("K").reset_index(drop=True)
+    fig, ax = plt.subplots()
+    ax.plot(sub["K"], sub["price"], "ko", label="Mercado", markersize=4)
+    for spec, style in [(HESTON_SPEC, "C0-"), (LINHE_SPEC, "C1--")]:
+        pm = model_prices(calibs[spec.name]["params"], sub, spec)
+        ax.plot(sub["K"], pm, style, label=f"{spec.name}")
+    ax.set_xlabel("Strike $K$")
+    ax.set_ylabel("Precio de la call")
+    ax.set_title(f"Ajuste de la calibración (vencimiento {int(d0)} días, in-sample)")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(RESULTS_FIGURES / "06_ajuste_calibracion.png")
+    print("Figura de ajuste guardada: 06_ajuste_calibracion.png")
 
 
 if __name__ == "__main__":

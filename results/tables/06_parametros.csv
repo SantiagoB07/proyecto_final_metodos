@@ -1,0 +1,10 @@
+parametro,Heston,Lin-He
+kappa,5.1474,5.1461
+theta,0.0483,0.0482
+sigma,1.2552,1.2535
+rho,-0.6226,-0.6229
+v0,0.0171,0.0171
+lambda1,,0.0000
+lambda2,,0.0000
+lambda12,,5.0000
+lambda21,,5.0000
