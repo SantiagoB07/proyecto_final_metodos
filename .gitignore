@@ -9,8 +9,5 @@ __pycache__/
 # Node / reveal.js
 node_modules/
 
-# Typst
-paper/*.pdf
-
 # Sistema
 .DS_Store
