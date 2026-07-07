@@ -222,6 +222,14 @@ son americanas; para calls de corto plazo (30–90 días) sobre un subyacente de
 por dividendos, la prima de ejercicio anticipado es despreciable y la valoración europea es una
 buena aproximación (limitación que señalamos en la discusión).
 
+*Panel histórico (fidelidad al diseño del artículo).* Para replicar el diseño empírico del
+artículo —que estima con datos de los miércoles y valida con los jueves a lo largo de seis
+meses— construimos un panel de opciones EOD de SPY de enero a julio de 2026, con las cadenas
+históricas de la base pública de DoltHub #cite(<DoltHubOptions>) y el subyacente y la tasa
+de yfinance. El panel resultante tiene #box[≈40] opciones por fecha en 25 miércoles (in-sample) y
+24 jueves (out-of-sample), tras los mismos filtros. La @tab-panel resume el conjunto; la
+@fig-sonrisa muestra la superficie de volatilidad implícita de un corte representativo.
+
 *Filtros* (siguiendo al artículo, Sección 4.1): vencimientos entre 30 y 90 días; moneyness
 $|S - K| / K < 10%$; precio de mercado igual al punto medio bid-ask; se descartan cotizaciones
 vacías. La tasa libre de riesgo es el T-Bill a 13 semanas (`^IRX`), análogo al T-Bill de 3 meses
@@ -232,9 +240,10 @@ put-call (forward implícito $F$ del par call-put más cercano a ATM, y $q = r -
 Este enfoque es autocontenido y consistente con los precios observados.
 
 #figure(
-  csv_table("../results/tables/05_resumen_datos.csv", ("Métrica", "Valor")),
-  caption: [Resumen del conjunto de datos de mercado (SPY) tras aplicar los filtros del artículo.],
-) <tab-datos>
+  csv_table("../results/tables/08_resumen_panel.csv", ("Métrica", "Valor")),
+  caption: [Resumen del panel histórico de opciones de SPY (miércoles in-sample, jueves
+    out-of-sample), tras aplicar los filtros del artículo.],
+) <tab-panel>
 
 La @fig-sonrisa muestra la superficie de volatilidad implícita del conjunto limpio. Se observa el
 _skew_ característico de los índices de renta variable: la volatilidad implícita decrece con el
@@ -311,34 +320,47 @@ Calibramos minimizando el error cuadrático medio en dólares entre precios de m
 (ec. 4.1 del artículo),
 $ "MSE" = 1/N sum_(i=1)^N (C_i^"mercado" - C_i^"modelo")^2, $
 con optimización global (`scipy.optimize.dual_annealing`, análogo abierto al _adaptive simulated
-annealing_ del artículo), pues el objetivo no es convexo. Calibramos con datos in-sample y
-evaluamos también fuera de muestra. Las cotas de los parámetros, la semilla y el optimizador se
-reportan en el código para reproducibilidad.
+annealing_ del artículo), pues el objetivo no es convexo, seguida de un pulido local. Como el
+modelo de Lin & He contiene a Heston como caso anidado ($lambda = 0$), inicializamos su
+calibración en la solución de Heston con $lambda approx 0$; esto garantiza la propiedad de
+anidamiento $"MSE"("Lin&He") <= "MSE"("Heston")$ y evita mínimos locales espurios. Las cotas, la
+semilla y el optimizador se reportan en el código.
 
-La @tab-parametros presenta los parámetros estimados; la @tab-errores, los errores dentro y fuera
-de muestra; y la @tab-moneyness, el desglose por moneyness (análogos a las Tablas 1–3 del
-artículo).
+Siguiendo el diseño del artículo, calibramos por fecha sobre el panel: cada miércoles se estima
+in-sample y el jueves siguiente se usa para el error out-of-sample; las 25 fechas se calibran en
+paralelo y los resultados se promedian ("daily-averaged"). La @tab-parametros presenta los
+parámetros medios; la @tab-errores, los errores medios dentro y fuera de muestra; y la
+@tab-moneyness, el desglose por moneyness (análogos a las Tablas 1–3 del artículo).
 
 #figure(
-  csv_table("../results/tables/06_parametros.csv", ("Parámetro", "Heston", "Lin & He")),
-  caption: [Parámetros estimados (in-sample) para ambos modelos.],
+  csv_table("../results/tables/09_parametros_panel.csv", ("Parámetro", "Heston", "Lin & He")),
+  caption: [Parámetros medios sobre las 25 fechas del panel (in-sample).],
 ) <tab-parametros>
 
 #figure(
-  csv_table("../results/tables/06_errores.csv", ("Modelo", "MSE in-sample", "MSE out-of-sample")),
-  caption: [Errores cuadráticos medios dentro y fuera de muestra.],
+  csv_table("../results/tables/09_errores_panel.csv",
+    ("Modelo", "MSE in (medio)", "MSE out (medio)", "MSE out (mediana)")),
+  caption: [Errores promediados sobre fechas. La media out-of-sample está inflada por dos jueves
+    con saltos de mercado overnight; la mediana es la estadística robusta (ver discusión).],
 ) <tab-errores>
 
 #figure(
-  csv_table("../results/tables/06_errores_moneyness.csv", ("Modelo", "OTM", "ATM", "ITM")),
-  caption: [Errores fuera de muestra por moneyness.],
+  csv_table("../results/tables/09_moneyness_panel.csv", ("Modelo", "OTM", "ATM", "ITM")),
+  caption: [Mediana del error out-of-sample por moneyness sobre las fechas del panel.],
 ) <tab-moneyness>
 
 #figure(
-  image("../results/figures/06_ajuste_calibracion.png", width: 78%),
-  caption: [Ajuste de la calibración: precios de mercado vs precios de ambos modelos calibrados
-    para el vencimiento más corto (in-sample). Las curvas de Heston y Lin & He se superponen.],
-) <fig-ajuste>
+  image("../results/figures/09_mse_por_fecha.png", width: 92%),
+  caption: [MSE in-sample por fecha (miércoles) para ambos modelos. Lin & He mejora
+    estrictamente en el 52% de las fechas.],
+) <fig-mse-fecha>
+
+#figure(
+  image("../results/figures/09_lambda_por_fecha.png", width: 92%),
+  caption: [Niveles de volatilidad de la volatilidad de régimen $lambda_1, lambda_2$ calibrados
+    por fecha. Su valor medio (#box[≈0.015]) es positivo, a diferencia del corte transversal
+    único, donde la calibración los lleva a cero.],
+) <fig-lambda-fecha>
 
 = Discusión: análisis numérico y comparación
 
@@ -384,48 +406,49 @@ por precio se reporta en `results/tables/04_costo_computacional.csv`.
 == Comparación con el artículo
 
 Los parámetros de Heston que estimamos (@tab-parametros) son del mismo orden que los del artículo
-(su Tabla 1): reversión $k approx 5.1$ (artículo $8.7$), nivel $theta approx 0.048$ (artículo
-$0.082$), volatilidad de volatilidad $sigma approx 1.26$ (artículo $1.41$) y correlación
-$rho approx -0.62$ (artículo $-0.31$). Las diferencias son esperables: usamos SPY en 2026 en vez
-de SPX en 2011, un único corte transversal en lugar de seis meses de datos, y un optimizador
-distinto.
+(su Tabla 1): reversión $k approx 11$ (artículo $8.7$), nivel $theta approx 0.041$ (artículo
+$0.082$), volatilidad de volatilidad $sigma approx 1.75$ (artículo $1.41$) y correlación
+$rho approx -0.72$ (artículo $-0.31$). Las diferencias son esperables: usamos SPY en 2026 en vez
+de SPX en 2011 y un optimizador distinto.
 
-El resultado más relevante es que, en nuestra calibración, *el modelo de Lin & He no mejora al de
-Heston*: el optimizador lleva $lambda_1, lambda_2 arrow 0$, con lo que el modelo se reduce
-exactamente a Heston y ambos alcanzan el mismo MSE (@tab-errores), con curvas de precio
-indistinguibles (@fig-ajuste). Esto contrasta con el artículo, donde el modelo de Lin & He reduce
-el MSE en torno a un 45% respecto de Heston.
+En cuanto a la pregunta central —¿mejora el cambio de régimen al modelo de Heston?— nuestro
+estudio de panel reproduce el resultado del artículo *en dirección, aunque con menor magnitud*.
+El modelo de Lin & He alcanza un MSE in-sample medio de $0.0437$ frente a $0.0455$ de Heston (una
+mejora de #box[≈4%]) y mejora estrictamente en el 52% de las fechas (@fig-mse-fecha); los niveles
+de régimen calibrados son en promedio positivos ($lambda approx 0.015$, @fig-lambda-fecha),
+comparables en orden de magnitud a los del artículo ($lambda_1 = 0.045$, $lambda_2 = 0.036$).
+Fuera de muestra la mejora es marginal (mediana $0.268$ vs $0.270$). El artículo reporta mejoras
+mucho mayores (#box[≈45%] in-sample); atribuimos la diferencia a que su muestra (SPX, enero–junio
+2011) corresponde a un periodo de fuerte turbulencia y cambio de régimen (crisis de deuda
+europea), mientras que nuestro periodo (SPY, 2026) es más calmo, y a que nuestro panel tiene menos
+opciones y vencimientos por fecha, lo que identifica más débilmente los cuatro parámetros de
+régimen (las tasas de transición, en particular, quedan cerca de su valor inicial).
 
-La explicación es metodológica y, entendemos, instructiva. El artículo calibra un *único* conjunto
-de parámetros a un *panel* de seis meses de cotizaciones (miércoles para estimar, jueves para
-validar). En ese contexto, un solo Heston debe servir a muchos estados de mercado distintos a lo
-largo del tiempo, y el factor de cambio de régimen aporta la flexibilidad para capturar esa
-variación temporal. En cambio, nuestra calibración usa un *solo corte transversal* (la superficie
-de un día): un único Heston ya ajusta bien esa sonrisa (MSE in-sample de 0.043 sobre 325
-opciones), y no hay variación de régimen entre fechas que capturar, de modo que el segundo factor
-es innecesario y no está identificado. En otras palabras, la ventaja del cambio de régimen es un
-fenómeno de *serie temporal*, no de *corte transversal*, y nuestra limitación de datos (un solo
-snapshot) impide reproducir la mejora reportada.
+*Nota sobre el error fuera de muestra.* La media out-of-sample está inflada por dos jueves con
+saltos de mercado overnight, en los que los parámetros del miércoles anterior dejan de ser
+válidos (el error de esas dos fechas supera $100$, frente a $< 3$ en el resto). Por eso reportamos
+la mediana como estadística robusta, que refleja el desempeño típico.
 
 = Conclusiones
 
 Implementamos y verificamos la fórmula cerrada de #cite(<LinHe2021>, form: "prose") para
 opciones europeas bajo un modelo de Heston de dos factores con cambio de régimen, y la calibramos
-a datos de mercado. Las verificaciones (degeneración a Heston, validación de la integral, y dos
-Monte Carlo independientes) confirman la corrección de la implementación. El principal hallazgo
-numérico propio es que la función característica del modelo no está acotada a altas frecuencias
-—consecuencia directa de la violación de la condición de Feller— lo que exige un truncamiento
-cuidadoso de la integral de inversión, aspecto no discutido en el artículo original.
+a un panel de seis meses de datos de mercado replicando el diseño del artículo. Las verificaciones
+(degeneración a Heston, validación de la integral, y dos Monte Carlo independientes) confirman la
+corrección de la implementación. El principal hallazgo numérico propio es que la función
+característica del modelo no está acotada a altas frecuencias —consecuencia directa de la
+violación de la condición de Feller— lo que exige un truncamiento cuidadoso de la integral de
+inversión, aspecto no discutido en el artículo original.
 
-En el estudio empírico, sobre un único corte transversal de opciones de SPY el modelo de Lin & He
-se reduce a Heston ($lambda arrow 0$) y no mejora el ajuste, a diferencia del artículo. Atribuimos
-esto a que la ventaja del cambio de régimen se manifiesta a lo largo del tiempo (en un panel
-multi-fecha) y no dentro de una sola superficie. Las extensiones naturales son, por tanto:
-calibrar a un *panel* de varias fechas (que requeriría una fuente de datos históricos de opciones,
-no disponible vía la API en vivo usada aquí); calibrar además el modelo de Elliott–Lian como
-tercer competidor, como en el artículo; y tratar explícitamente el ejercicio americano de las
-opciones de SPY. Estas direcciones permitirían una comparación más fiel con los resultados
-originales.
+Empíricamente, sobre el panel el modelo de Lin & He mejora modestamente al de Heston (#box[≈4%]
+in-sample, con niveles de régimen positivos), reproduciendo la dirección del resultado del
+artículo aunque con menor magnitud, atribuible al periodo de mercado más calmo y al menor número
+de opciones por fecha. Es ilustrativo que sobre un único corte transversal la calibración lleva
+$lambda arrow 0$ (el modelo se reduce a Heston): la ventaja del cambio de régimen se manifiesta al
+promediar sobre fechas con distintos estados de mercado, no dentro de una sola superficie de un
+día. Las extensiones naturales son calibrar además el modelo de Elliott–Lian como tercer
+competidor, tratar explícitamente el ejercicio americano de las opciones de SPY, y usar un periodo
+de mayor turbulencia para poner a prueba la ventaja del cambio de régimen.
 
 #block(fill: luma(245), inset: 8pt, radius: 3pt, width: 100%)[
   *Declaración de uso de IA.* Este trabajo se apoyó en herramientas de IA (asistente de

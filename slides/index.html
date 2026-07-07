@@ -152,12 +152,13 @@
 
         <!-- 12 -->
         <section>
-          <h3>Datos de mercado</h3>
+          <h3>Datos de mercado: panel de 6 meses</h3>
           <ul class="small">
-            <li>Opciones de <strong>SPY</strong> (S&amp;P 500) vía yfinance; SPX fuera de horario solo daba ITM.</li>
-            <li>Filtros del artículo: 30–90 días, \(|S-K|/K&lt;10\%\), precio = mid bid-ask.</li>
-            <li>Tasa: T-Bill 13 semanas (^IRX). Dividendos \(q\) por paridad put-call.</li>
-            <li>650 contratos \(\to\) 325 in-sample / 325 out-of-sample; cobertura OTM/ATM/ITM.</li>
+            <li>Opciones de <strong>SPY</strong> (S&amp;P 500); SPX fuera de horario solo daba ITM.</li>
+            <li><strong>Panel ene–jul 2026</strong> (fiel al artículo): miércoles in-sample, jueves out-of-sample.</li>
+            <li>Cadenas históricas EOD de <strong>DoltHub</strong>; spot y tasa (^IRX) de yfinance.</li>
+            <li>Filtros del artículo: 30–90 días, \(|S-K|/K&lt;10\%\), mid bid-ask; \(q\) por paridad.</li>
+            <li>~40 opciones/fecha en 25 miércoles + 24 jueves; cobertura OTM/ATM/ITM.</li>
             <li><span class="small">Limitación: opciones de SPY son americanas (\(\approx\) europeas en corto plazo).</span></li>
           </ul>
         </section>
@@ -175,27 +176,28 @@
 
         <!-- 14 -->
         <section>
-          <h3>Resultados de la calibración</h3>
+          <h3>Resultados del panel (promediado diario)</h3>
           <div class="cols">
             <div class="small">
               <ul>
-                <li>MSE in-sample: Heston = Lin–He = 0.0435.</li>
-                <li>El optimizador lleva \(\lambda\to 0\): Lin–He se reduce a Heston.</li>
-                <li>Curvas de precio indistinguibles.</li>
+                <li>MSE in-sample: <strong>Lin–He 0.0437 &lt; Heston 0.0455</strong> (≈4% mejor).</li>
+                <li>Lin–He mejora en el <strong>52%</strong> de las fechas.</li>
+                <li>\(\lambda\) medio ≈ 0.015 (positivo), como en el artículo.</li>
+                <li>Out-of-sample (mediana): 0.268 vs 0.270.</li>
               </ul>
             </div>
-            <div><img src="assets/06_ajuste_calibracion.png" /></div>
+            <div><img src="assets/09_mse_por_fecha.png" /></div>
           </div>
         </section>
 
         <!-- 15 -->
         <section>
-          <h3>Discusión: ¿por qué no mejora aquí?</h3>
+          <h3>Discusión: comparación con el artículo</h3>
           <ul>
-            <li>El artículo calibra un <strong>panel de 6 meses</strong>: el régimen captura la variación <em>entre fechas</em>.</li>
-            <li>Nosotros: un <strong>solo corte transversal</strong> (un día). Heston ya ajusta bien la sonrisa.</li>
-            <li>La ventaja del régimen es un fenómeno de <em>serie temporal</em>, no de corte transversal.</li>
-            <li>Limitación: yfinance solo da la cadena actual, no un panel histórico.</li>
+            <li>Reproducimos la <strong>dirección</strong> del resultado: Lin–He &gt; Heston en el panel.</li>
+            <li>Magnitud menor (≈4% vs ≈45%): SPX 2011 (crisis, más régimen) vs SPY 2026 (calmo); menos opciones/fecha.</li>
+            <li>En un <strong>solo día</strong> la calibración lleva \(\lambda\to0\): la ventaja del régimen es un fenómeno <em>entre fechas</em>.</li>
+            <li>Media out-of-sample inflada por 2 jueves con saltos overnight → se reporta la mediana.</li>
           </ul>
         </section>
 

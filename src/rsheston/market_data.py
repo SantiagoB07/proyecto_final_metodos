@@ -172,3 +172,91 @@ def save_processed(clean_df, name):
     out = DATA_PROCESSED / f"{name}.csv"
     clean_df.to_csv(out, index=False)
     return out
+
+
+# --------------------------------------------------------------------------------------------
+# Panel histórico (6 meses) desde DoltHub, para replicar el diseño del artículo
+# --------------------------------------------------------------------------------------------
+
+DOLT_API = "https://www.dolthub.com/api/v1alpha1/post-no-preference/options/master"
+
+
+def fetch_dolthub_chain(date_str, ticker="SPY", timeout=45):
+    """Descarga la cadena de opciones EOD de un día desde la base pública de DoltHub.
+
+    La API de DoltHub expira en escaneos de rango, pero las consultas por fecha exacta
+    (indexadas) son rápidas. Devuelve un DataFrame con expiration, strike, call_put, bid, ask,
+    vol, o None si no hay datos ese día (feriado) o la consulta falla.
+    """
+    import requests
+
+    q = (
+        "SELECT expiration, strike, call_put, bid, ask, vol FROM option_chain "
+        f"WHERE act_symbol='{ticker}' AND date='{date_str}'"
+    )
+    try:
+        resp = requests.get(DOLT_API, params={"q": q}, timeout=timeout)
+        data = resp.json()
+    except Exception:
+        return None
+    if data.get("query_execution_status") != "Success" or not data.get("rows"):
+        return None
+    df = pd.DataFrame(data["rows"])
+    for c in ["strike", "bid", "ask", "vol"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    df["date"] = date_str
+    return df
+
+
+def _forward_q_from_chain(calls_e, puts_e, S, r, tau):
+    """Forward implícito y q por paridad put-call, usando columnas bid/ask (formato DoltHub)."""
+    m = calls_e.merge(puts_e, on="strike", suffixes=("_c", "_p"))
+    m = m[(m["bid_c"] > 0) & (m["ask_c"] > 0) & (m["bid_p"] > 0) & (m["ask_p"] > 0)]
+    if len(m) == 0:
+        return None, None
+    c_mid = 0.5 * (m["bid_c"] + m["ask_c"]).to_numpy()
+    p_mid = 0.5 * (m["bid_p"] + m["ask_p"]).to_numpy()
+    diff = c_mid - p_mid
+    i = int(np.argmin(np.abs(diff)))
+    K_atm = float(m["strike"].to_numpy()[i])
+    forward = K_atm + np.exp(r * tau) * diff[i]
+    if forward <= 0:
+        return None, None
+    return float(forward), float(r - np.log(forward / S) / tau)
+
+
+def clean_panel_date(raw, S, r, min_days=30, max_days=90, max_abs_moneyness=0.10, min_price=0.05):
+    """Filtra la cadena de un día (formato DoltHub) y estima q por vencimiento.
+
+    Devuelve filas con columnas: date, S, K, tau, r, q, price, expiry, days, moneyness.
+    """
+    calls = raw[raw["call_put"] == "Call"]
+    puts = raw[raw["call_put"] == "Put"]
+    date_str = raw["date"].iloc[0]
+    asof = pd.to_datetime(date_str)
+    out = []
+    for expiry, ce in calls.groupby("expiration"):
+        days = (pd.to_datetime(expiry) - asof).days
+        if not (min_days <= days <= max_days):
+            continue
+        tau = days / 365.0
+        pe = puts[puts["expiration"] == expiry]
+        _, q = _forward_q_from_chain(ce, pe, S, r, tau)
+        if q is None:
+            q = 0.0
+        # Recorte defensivo: la q por paridad absorbe desajustes de timing spot/opción; se acota
+        # a un rango razonable para que una estimación atípica de un día no desestabilice.
+        q = float(min(max(q, -0.05), 0.06))
+        ce = ce.copy()
+        ce["price"] = np.where((ce["bid"] > 0) & (ce["ask"] > 0),
+                               0.5 * (ce["bid"] + ce["ask"]), np.nan)
+        ce["moneyness"] = (S - ce["strike"]) / ce["strike"]
+        sel = ce[(ce["moneyness"].abs() < max_abs_moneyness) & (ce["price"] >= min_price)
+                 & (ce["bid"] > 0) & (ce["ask"] > 0)]
+        for _, row in sel.iterrows():
+            out.append({
+                "date": date_str, "S": S, "K": float(row["strike"]), "tau": tau, "r": r,
+                "q": q, "price": float(row["price"]), "expiry": expiry, "days": days,
+                "moneyness": float(row["moneyness"]),
+            })
+    return out

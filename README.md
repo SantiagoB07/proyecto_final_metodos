@@ -52,8 +52,14 @@ docs/           rúbrica, artículo, programa, plan
 | `scripts/03_figs_articulo.py` | `figures/03_precio_vs_z.png`, `figures/03_precio_vs_vencimiento.png` | Verificación |
 | `scripts/04_numerical_analysis.py` | `figures/04_convergencia_nodos.png`, `04_truncamiento_y_cola.png`, `04_integrando.png`, `tables/04_costo_computacional.csv` | Discusión |
 | `scripts/05_get_data.py` | `data/raw/`, `data/processed/`, `figures/05_sonrisa_volatilidad.png`, `tables/05_resumen_datos.csv` | Datos |
-| `scripts/06_calibrate.py` | `tables/06_parametros.csv`, `06_errores.csv`, `06_errores_moneyness.csv`, `figures/06_ajuste_calibracion.png` | Calibración |
+| `scripts/06_calibrate.py` | `tables/06_*` (corte transversal único), `figures/06_ajuste_calibracion.png` | Calibración |
+| `scripts/08_get_panel.py` | `data/raw/panel_spy_*.csv`, `data/processed/panel_*.csv`, `tables/08_resumen_panel.csv` | Datos (panel) |
+| `scripts/09_calibrate_panel.py` | `tables/09_parametros_panel.csv`, `09_errores_panel.csv`, `09_moneyness_panel.csv`, `figures/09_*.png` | Calibración (panel) |
 | `scripts/07_make_all.py` | reproduce todo lo anterior | — |
+
+El **panel histórico de 6 meses** (scripts 08–09) replica el diseño del artículo (miércoles
+in-sample, jueves out-of-sample) con cadenas EOD de SPY de DoltHub. Es el estudio empírico
+principal; los scripts 05–06 son un corte transversal único (más rápido, ilustrativo).
 
 Diapositivas: `slides/index.html` (reveal.js); exportar a PDF con
 `npx decktape reveal --chrome-arg=--no-sandbox http://localhost:PORT/index.html slides/slides.pdf`

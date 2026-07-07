@@ -77,3 +77,14 @@ dividendos (idéntica con q=0). Sin errores reales.
   hallazgo numérico, datos, calibración, discusión, conclusiones) con KaTeX y figuras.
 - Exportado a slides/slides.pdf con decktape (--no-sandbox por el sandbox del contenedor).
 - scripts/07_make_all.py: reproduce todas las figuras/tablas de principio a fin.
+
+## Estudio de panel de 6 meses (fidelidad al artículo) ✅
+- A petición del usuario, se añadió el panel histórico (D9) para replicar el diseño del artículo.
+- Fuente: cadenas EOD de SPY de DoltHub (histórico diario; yfinance no lo da). Spot/tasa de yfinance.
+- `08_get_panel.py`: 989 opciones in-sample (25 miércoles) + 671 out-of-sample (24 jueves),
+  ene-jul 2026, q por paridad. `09_calibrate_panel.py`: calibración por fecha en paralelo (4 proc).
+- Resultado: **Lin-He mejora a Heston** — in-sample medio 0.0437 vs 0.0455 (~4%), mejora en 52%
+  de fechas, λ medio ~0.015 (>0). Dirección del artículo, magnitud menor (SPY 2026 calmo vs SPX
+  2011 crisis; menos opciones/fecha). Out-of-sample: mediana 0.268 vs 0.270 (media inflada por 2
+  jueves con saltos overnight → se reporta mediana).
+- Paper y slides actualizados: el panel es ahora el estudio empírico principal.

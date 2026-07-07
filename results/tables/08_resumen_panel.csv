@@ -1,0 +1,10 @@
+metrica,valor
+fecha_inicio,2026-01-07
+fecha_fin,2026-07-01
+n_fechas_miercoles,25
+n_fechas_jueves,24
+n_opciones_in,989
+n_opciones_out,671
+opciones_por_fecha_in,39.6
+spot_min,643.43
+spot_max,755.14

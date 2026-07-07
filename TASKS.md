@@ -14,8 +14,8 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | 2 | Pricer del modelo Lin–He | ✅ |
 | 3 | Verificación Monte Carlo + figuras del artículo | ✅ |
 | 4 | Análisis numérico del método | ✅ |
-| 5 | Datos de mercado (yfinance **SPY**, ver D7) | ✅ |
-| 6 | Calibración (MSE, dual_annealing) | ✅ |
+| 5 | Datos de mercado (SPY snapshot + **panel 6m** DoltHub, D7/D9) | ✅ |
+| 6 | Calibración (snapshot + **panel diario** fiel al artículo) | ✅ |
 | 7 | Trabajo escrito (Typst) | ✅ (13 págs, 12 de cuerpo) |
 | 8 | Diapositivas (reveal.js) + PDF | ✅ (16 diapositivas, PDF exportado) |
 

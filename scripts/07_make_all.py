@@ -24,6 +24,8 @@ ORDER = [
     "04_numerical_analysis",
     "05_get_data",
     "06_calibrate",
+    "08_get_panel",      # panel histórico de 6 meses (reutiliza el crudo versionado)
+    "09_calibrate_panel",  # calibración por fecha (paralela) y resultados promediados
 ]
 
 
@@ -41,7 +43,7 @@ def main():
     print("== Reproducción completa de figuras y tablas ==\n")
     for name in ORDER:
         print(f">>> {name}")
-        if name == "05_get_data":
+        if name in ("05_get_data", "08_get_panel"):
             _run(name, force=refresh)
         else:
             _run(name)
