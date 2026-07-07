@@ -12,11 +12,11 @@ Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ completada · ⛔ bloqueada
 | 0 | Infraestructura (uv, layout, tooling) | ✅ |
 | 1 | Pricer de referencia (Black–Scholes, Heston) | ✅ |
 | 2 | Pricer del modelo Lin–He | ✅ |
-| 3 | Verificación Monte Carlo + figuras del artículo | 🟡 |
-| 4 | Análisis numérico del método | 🟡 (script listo) |
-| 5 | Datos de mercado (yfinance **SPY**, ver D7) | 🟡 (datos listos) |
-| 6 | Calibración (MSE, dual_annealing) | 🟡 (código listo) |
-| 7 | Trabajo escrito (Typst) | ⬜ |
+| 3 | Verificación Monte Carlo + figuras del artículo | ✅ |
+| 4 | Análisis numérico del método | ✅ |
+| 5 | Datos de mercado (yfinance **SPY**, ver D7) | ✅ |
+| 6 | Calibración (MSE, dual_annealing) | 🟡 (código listo, falta ejecutar) |
+| 7 | Trabajo escrito (Typst) | 🟡 (borrador, faltan resultados calibración) |
 | 8 | Diapositivas (reveal.js) + ensayo | ⬜ |
 
 ## Etapa 0 — Infraestructura ✅

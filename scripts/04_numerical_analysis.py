@@ -59,8 +59,10 @@ def truncation_and_tail():
     """Precio vs u_max (fijo): estable en la meseta y basura tras la explosión de la cola."""
     cf = make_linhe_cf(S=S, tau=TAU, r=R, params=P_FIG1, state=STATE)
     umaxes = np.arange(20, 320, 10)
-    prices = [gil_pelaez_call(cf, S, K, R, TAU, u_max=u, n_nodes=512, adaptive=False)
-              for u in umaxes]
+    # Los truncamientos grandes caen en la región de explosión de la cola (warnings esperados).
+    with np.errstate(over="ignore", invalid="ignore"):
+        prices = [gil_pelaez_call(cf, S, K, R, TAU, u_max=u, n_nodes=512, adaptive=False)
+                  for u in umaxes]
     adaptive_price = gil_pelaez_call(cf, S, K, R, TAU)  # adaptativo
 
     fig, ax = plt.subplots()
