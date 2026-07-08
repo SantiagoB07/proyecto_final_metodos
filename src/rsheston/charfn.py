@@ -179,11 +179,8 @@ def _expm_2x2(a, b, c, d):
 def linhe_M_entries(f, tau, params: LinHeParams):
     """Entradas de la matriz ``M = A^T * tau + diag(1/2 lambda_i^2 f)`` (ec. 2.18).
 
-    ``A`` es la matriz de tasas de transición de la cadena de Markov.
-
-    Nota (errata del artículo): la forma explícita impresa de M tiene la entrada (2,2) como
-    ``-lambda21 + ...`` sin el factor ``tau``; la derivación ``∫ A^T ds = A^T tau`` implica
-    ``-lambda21*tau``, que es lo que se usa aquí. Se verifica numéricamente por degeneración
+    ``A`` es la matriz de tasas de transición de la cadena de Markov. La entrada (2,2) de M es
+    ``-lambda21*tau`` (de ``∫ A^T ds = A^T tau``). Se verifica numéricamente por degeneración
     a Heston y contra Monte Carlo.
     """
     l12, l21 = params.lambda12, params.lambda21

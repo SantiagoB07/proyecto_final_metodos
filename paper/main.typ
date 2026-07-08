@@ -204,15 +204,6 @@ Heston en una sola exponencial por autovalor; esto evita el desbordamiento $0 ti
 que aparece en la cola de altas frecuencias (donde el factor de Heston decae mientras el de
 régimen crece), problema al que volvemos en la Sección 6.
 
-#block(fill: luma(245), inset: 8pt, radius: 3pt, width: 100%)[
-  *Nota sobre erratas del artículo.* Al transcribir las fórmulas detectamos y verificamos
-  numéricamente dos erratas tipográficas del texto original: (i) la entrada $(2,2)$ de la matriz
-  explícita $M$ aparece como $-lambda_(21)$ sin el factor $tau$, cuando la derivación
-  $integral A^T d s = A^T tau$ implica $-lambda_(21) tau$ (usamos esta última); (ii) las
-  ecuaciones (2.16) y (2.20) escriben la unidad imaginaria como $i$ en vez de $j$. Ninguna
-  afecta la implementación una vez corregidas.
-]
-
 = Datos
 
 Calibramos a opciones sobre el S&P 500. El artículo usa opciones europeas del índice (SPX) de
