@@ -1,4 +1,4 @@
-"""Reproduce de principio a fin todas las figuras y tablas del documento.
+"""Reproduce de principio a fin todas las figuras y tablas del análisis.
 
 Ejecuta en orden los scripts de verificación, análisis numérico, datos y calibración.
 El script de datos (05) reutiliza el snapshot crudo versionado en data/raw/ (no vuelve a
@@ -48,7 +48,6 @@ def main():
         else:
             _run(name)
     print("== Completado. Resultados en results/figures y results/tables. ==")
-    print("Compilar el trabajo escrito: typst compile --root . paper/main.typ paper/main.pdf")
 
 
 if __name__ == "__main__":

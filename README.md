@@ -17,8 +17,6 @@ Proyecto final del curso *Métodos Numéricos en Finanzas*
 ## Requisitos
 
 - [uv](https://docs.astral.sh/uv/) (gestiona Python, el entorno virtual y las dependencias).
-- [Typst](https://typst.app/) ≥ 0.15 (para compilar el trabajo escrito).
-- [Node.js](https://nodejs.org/) ≥ 18 (para servir/exportar las diapositivas reveal.js).
 
 ## Instalación
 
@@ -32,7 +30,6 @@ uv sync          # crea .venv e instala dependencias exactas desde uv.lock
 uv run pytest                                 # verificación automatizada
 uv run python scripts/05_get_data.py          # descargar y guardar snapshot de datos
 uv run python scripts/07_make_all.py          # reproducir todas las figuras y tablas
-typst compile --root . paper/main.typ paper/main.pdf   # compilar el trabajo escrito
 ```
 
 ## Estructura
@@ -42,14 +39,12 @@ src/rsheston/   biblioteca: charfn, pricing, montecarlo, calibration, market_dat
 tests/          verificación automatizada (pytest)
 scripts/        ejecutables numerados (uno por figura/tabla)
 data/           raw/ (snapshots con fecha), processed/ (filtrados)
-results/        figures/, tables/ (consumidos por el paper)
-paper/          trabajo escrito (Typst)
-slides/         diapositivas (reveal.js)
+results/        figures/, tables/ (salidas del análisis)
 ```
 
 ## Mapa script → figura/tabla
 
-| Script | Genera | Sección del documento |
+| Script | Genera | Tema |
 | --- | --- | --- |
 | `scripts/01_verify_heston_limit.py` | `figures/01_degeneracion_heston.png` | Verificación |
 | `scripts/02_verify_semimc.py` | `figures/02_formula_vs_montecarlo.png`, `tables/02_errores_montecarlo.csv` | Verificación |
@@ -64,10 +59,6 @@ slides/         diapositivas (reveal.js)
 El **panel histórico de 6 meses** (scripts 08–09) replica el diseño del artículo (miércoles
 in-sample, jueves out-of-sample) con cadenas EOD de SPY de DoltHub. Es el estudio empírico
 principal; los scripts 05–06 son un corte transversal único (más rápido, ilustrativo).
-
-Diapositivas: `slides/index.html` (reveal.js); exportar a PDF con
-`npx decktape reveal --chrome-arg=--no-sandbox http://localhost:PORT/index.html slides/slides.pdf`
-(servir `slides/` con `python -m http.server` primero).
 
 ## Nota sobre el uso de IA
 

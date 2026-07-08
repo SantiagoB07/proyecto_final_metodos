@@ -6,8 +6,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Node / reveal.js
-node_modules/
-
 # Sistema
 .DS_Store
