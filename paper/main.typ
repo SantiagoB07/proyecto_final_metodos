@@ -35,7 +35,7 @@
 
   #v(0.6em)
   Proyecto final · Métodos Numéricos en Finanzas \
-  Maestría en Actuaría y Finanzas · Universidad Nacional de Colombia · 2026-I
+  Universidad Nacional de Colombia · 2026-I
 ]
 
 #v(0.6em)

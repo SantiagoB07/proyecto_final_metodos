@@ -1,14 +1,14 @@
 """Descarga y limpieza de datos de mercado (opciones del S&P 500).
 
 Fuente: yfinance. Por defecto ``SPY`` (ETF del S&P 500), cuyas opciones tienen liquidez amplia
-en todo el rango de moneyness (ver D7); el código también soporta ``^SPX`` (opciones europeas
+en todo el rango de moneyness; el código también soporta ``^SPX`` (opciones europeas
 del índice) pasando ``ticker="^SPX"``. Tasa libre de riesgo: ``^IRX`` (T-Bill 13 semanas),
 análogo al T-Bill de 3 meses del artículo.
 
-Dividendos (ver D8): el rendimiento por dividendos ``q`` se estima por vencimiento a partir de
+Dividendos: el rendimiento por dividendos ``q`` se estima por vencimiento a partir de
 la paridad put-call (forward implícito), sin necesidad de datos externos de dividendos.
 
-Reproducibilidad (D4): yfinance es una API en vivo. ``download_option_chain`` guarda el snapshot
+Reproducibilidad: yfinance es una API en vivo. ``download_option_chain`` guarda el snapshot
 crudo con fecha en ``data/raw/``; el resto del pipeline lee de ese archivo.
 
 Filtros del artículo (Sección 4.1):

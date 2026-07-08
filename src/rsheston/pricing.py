@@ -31,11 +31,11 @@ def _leggauss_cached(n_nodes):
     """Nodos y pesos de Gauss-Legendre en [-1, 1], cacheados (leggauss es O(n^2))."""
     return np.polynomial.legendre.leggauss(n_nodes)
 
-# Configuración por defecto de la cuadratura de Gil-Pelaez. La Etapa 4 (análisis numérico)
+# Configuración por defecto de la cuadratura de Gil-Pelaez. El análisis numérico
 # justifica estos valores estudiando convergencia frente al truncamiento y el número de nodos.
 DEFAULT_U_MAX = 200.0
 DEFAULT_N_NODES = 256
-DEFAULT_TRUNC_TOL = 1e-12  # tolerancia para el truncamiento adaptativo (ver D6)
+DEFAULT_TRUNC_TOL = 1e-12  # tolerancia para el truncamiento adaptativo de la cola
 
 
 def black_scholes_call(S, K, r, tau, sigma, q=0.0):
@@ -82,7 +82,7 @@ def implied_vol(price, S, K, r, tau, q=0.0, is_call=True, tol=1e-8, max_sigma=5.
 
 
 def adaptive_truncation(cf: Callable, u_cap=DEFAULT_U_MAX, tol=DEFAULT_TRUNC_TOL, n_probe=300):
-    """Elige un límite de truncamiento en la región de decaimiento de ``|m(phi)|`` (ver D6).
+    """Elige un límite de truncamiento en la región de decaimiento de ``|m(phi)|``.
 
     La función característica del modelo de Lin & He no está acotada: decae a frecuencias
     moderadas pero crece en la cola (violación de Feller). Se sondea ``|m(phi)|`` en una malla
@@ -132,8 +132,8 @@ def gil_pelaez_call(
         q: rendimiento por dividendos.
         u_max: límite superior de truncamiento (tope del sondeo si ``adaptive=True``).
         n_nodes: número de nodos de la cuadratura de Gauss-Legendre.
-        adaptive: si True, elige el truncamiento en la región de decaimiento (ver D6);
-            si False, usa ``u_max`` fijo (útil para estudios de convergencia, Etapa 4).
+        adaptive: si True, elige el truncamiento en la región de decaimiento;
+            si False, usa ``u_max`` fijo (útil para estudios de convergencia).
         tol: tolerancia del truncamiento adaptativo.
 
     Returns:

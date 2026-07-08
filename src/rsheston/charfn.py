@@ -2,8 +2,7 @@
 
 Implementa la función característica de ``y_T = ln S_T`` bajo el modelo de Heston (1993),
 que en este proyecto sirve como referencia y como benchmark de calibración. El modelo de
-Lin & He (2021) reutiliza estas mismas piezas (``d``, ``g``, ``D``, ``C``) y se implementa en
-la Etapa 2.
+Lin & He (2021) reutiliza estas mismas piezas (``d``, ``g``, ``D``, ``C``).
 
 Convención de notación (siguiendo el artículo): la unidad imaginaria se denota ``j`` en el
 texto; aquí usamos ``1j`` de numpy. La función característica es ``m(phi) = E[exp(j*phi*y_T)]``.
@@ -47,7 +46,7 @@ def heston_core(phi, tau, kappa, theta, sigma, rho):
 
     Devuelve ``(a, d, g, edt)`` donde ``a = j*phi*rho*sigma - k``, ``d`` es la raíz que aparece
     en la solución de la Riccati (2.14), ``g`` el cociente asociado y ``edt = exp(d*tau)``.
-    Estas cantidades las reutilizan tanto ``D``/``C`` (Heston) como ``f`` (Lin & He, Etapa 2),
+    Estas cantidades las reutilizan tanto ``D``/``C`` (Heston) como ``f`` (Lin & He),
     de modo que la solución de la ODE se escribe en un solo lugar.
     """
     j = 1j
@@ -185,7 +184,7 @@ def linhe_M_entries(f, tau, params: LinHeParams):
     Nota (errata del artículo): la forma explícita impresa de M tiene la entrada (2,2) como
     ``-lambda21 + ...`` sin el factor ``tau``; la derivación ``∫ A^T ds = A^T tau`` implica
     ``-lambda21*tau``, que es lo que se usa aquí. Se verifica numéricamente por degeneración
-    a Heston y contra Monte Carlo (Etapa 3).
+    a Heston y contra Monte Carlo.
     """
     l12, l21 = params.lambda12, params.lambda21
     M11 = -l12 * tau + 0.5 * params.lambda1**2 * f
@@ -258,7 +257,7 @@ def linhe_cf(phi, *, S, tau, r, params: LinHeParams, state=1, q=0.0):
     beta = num / s_safe
     # Rama estable general (autovalores separados); en cada exp se combina H con mu±.
     # Los desbordamientos en la cola de altas frecuencias son esperados (la cf del modelo no
-    # está acotada, ver D6) y se manejan por truncamiento adaptativo aguas arriba.
+    # está acotada) y se manejan por truncamiento adaptativo aguas arriba.
     with np.errstate(over="ignore", invalid="ignore"):
         m_main = 0.5 * (1 + beta) * np.exp(H + half_T + s) + 0.5 * (1 - beta) * np.exp(
             H + half_T - s

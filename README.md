@@ -5,8 +5,8 @@ Implementación, verificación y calibración del modelo de valoración de opcio
 Heston Model with Regime Switching"*, Computational Economics,
 DOI [10.1007/s10614-021-10117-6](https://doi.org/10.1007/s10614-021-10117-6).
 
-Proyecto final del curso *Métodos Numéricos en Finanzas* (Maestría en Actuaría y Finanzas,
-Universidad Nacional de Colombia, 2026-I).
+Proyecto final del curso *Métodos Numéricos en Finanzas*
+(Universidad Nacional de Colombia, 2026-I).
 
 ## Integrantes
 

@@ -1,4 +1,4 @@
-"""Calibración a datos de mercado y comparación de modelos (Etapa 6 / sección Calibración).
+"""Calibración a datos de mercado y comparación de modelos.
 
 Calibra el modelo de Heston y el de Lin & He a los datos in-sample (minimizando el MSE en
 dólares con dual_annealing), evalúa el ajuste in-sample y out-of-sample, y desglosa el error

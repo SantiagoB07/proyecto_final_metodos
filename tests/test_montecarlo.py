@@ -1,4 +1,4 @@
-"""Verificación de la Etapa 3: la fórmula cerrada coincide con Monte Carlo.
+"""Verificación de que la fórmula cerrada coincide con Monte Carlo.
 
 Tests rápidos (pocos caminos) con semilla fija. La verificación completa (más caminos,
 figuras) está en scripts/02_verify_semimc.py.
