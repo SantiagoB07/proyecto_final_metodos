@@ -29,6 +29,11 @@
   #text(12pt)[Implementación, verificación y calibración a datos de mercado]
 
   #v(0.8em)
+  #text(12pt)[
+    Santiago Botero Daza · Julián Alejandro Archila Caro · Juan Diego González Layton
+  ]
+
+  #v(0.6em)
   Proyecto final · Métodos Numéricos en Finanzas \
   Maestría en Actuaría y Finanzas · Universidad Nacional de Colombia · 2026-I
 ]
