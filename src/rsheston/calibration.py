@@ -1,4 +1,4 @@
-"""Calibración de los modelos a datos de mercado (Etapa 6).
+"""Calibración de los modelos a datos de mercado.
 
 Minimiza el error cuadrático medio en dólares entre precios de mercado y de modelo (ec. 4.1 del
 artículo), usando optimización global (``scipy.optimize.dual_annealing``, análogo abierto al

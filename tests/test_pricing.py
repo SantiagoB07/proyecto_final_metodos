@@ -1,4 +1,4 @@
-"""Verificación de la Etapa 1: Black-Scholes y valuador de Heston por Gil-Pelaez."""
+"""Verificación de Black-Scholes y del valuador de Heston por Gil-Pelaez."""
 
 import numpy as np
 import pytest

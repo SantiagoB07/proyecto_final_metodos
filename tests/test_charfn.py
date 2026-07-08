@@ -1,4 +1,4 @@
-"""Verificación de la Etapa 2: función característica del modelo Lin & He.
+"""Verificación de la función característica del modelo Lin & He.
 
 Estrategia de verificación (no confiar en la transcripción del artículo):
 1. La exponencial de matriz 2x2 en forma cerrada coincide con scipy.linalg.expm.
@@ -131,7 +131,7 @@ def test_linhe_price_differs_from_heston_with_regime():
 
 
 def test_adaptive_truncation_handles_tail_blowup():
-    """El truncamiento adaptativo da un precio estable pese a que |m| explota en la cola (D6).
+    """El truncamiento adaptativo da un precio estable pese a que |m| explota en la cola.
 
     Con los parámetros de la Fig. 1 del artículo (lambda1=0.01, lambda2=0.05, T=0.5) la cf
     decae hasta phi~120 y luego crece; un u_max fijo grande da basura, pero el modo adaptativo
@@ -147,7 +147,7 @@ def test_adaptive_truncation_handles_tail_blowup():
 
 
 def test_fixed_truncation_too_large_is_corrupted():
-    """Documenta el fallo esperado: con u_max fijo demasiado grande el precio se corrompe (D6)."""
+    """Documenta el fallo esperado: con u_max fijo demasiado grande el precio se corrompe."""
     p = _params(lambda1=0.01, lambda2=0.05)
     S, K, r, tau = 10.0, 10.0, 0.05, 0.5
     cf = make_linhe_cf(S=S, tau=tau, r=r, params=p, state=1)

@@ -29,8 +29,13 @@
   #text(12pt)[Implementación, verificación y calibración a datos de mercado]
 
   #v(0.8em)
+  #text(12pt)[
+    Santiago Botero Daza · Julián Alejandro Archila Caro · Juan Diego González Layton
+  ]
+
+  #v(0.6em)
   Proyecto final · Métodos Numéricos en Finanzas \
-  Maestría en Actuaría y Finanzas · Universidad Nacional de Colombia · 2026-I
+  Universidad Nacional de Colombia · 2026-I
 ]
 
 #v(0.6em)
@@ -198,15 +203,6 @@ $2 times 2$ en forma cerrada por descomposición espectral, y combinamos su expo
 Heston en una sola exponencial por autovalor; esto evita el desbordamiento $0 times infinity$
 que aparece en la cola de altas frecuencias (donde el factor de Heston decae mientras el de
 régimen crece), problema al que volvemos en la Sección 6.
-
-#block(fill: luma(245), inset: 8pt, radius: 3pt, width: 100%)[
-  *Nota sobre erratas del artículo.* Al transcribir las fórmulas detectamos y verificamos
-  numéricamente dos erratas tipográficas del texto original: (i) la entrada $(2,2)$ de la matriz
-  explícita $M$ aparece como $-lambda_(21)$ sin el factor $tau$, cuando la derivación
-  $integral A^T d s = A^T tau$ implica $-lambda_(21) tau$ (usamos esta última); (ii) las
-  ecuaciones (2.16) y (2.20) escriben la unidad imaginaria como $i$ en vez de $j$. Ninguna
-  afecta la implementación una vez corregidas.
-]
 
 = Datos
 

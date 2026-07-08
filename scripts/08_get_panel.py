@@ -1,4 +1,4 @@
-"""Descarga el panel histórico de 6 meses de opciones de SPY (Etapa 5-panel / sección Datos).
+"""Descarga el panel histórico de 6 meses de opciones de SPY.
 
 Replica el diseño del artículo: opciones de los MIÉRCOLES para estimación (in-sample) y de los
 JUEVES para validación (out-of-sample), a lo largo de ~6 meses. Las cadenas EOD provienen de la

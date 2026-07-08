@@ -1,4 +1,4 @@
-"""Calibración de panel (6 meses) — replica el diseño del artículo (Etapa 6-panel).
+"""Calibración de panel (6 meses) — replica el diseño del artículo.
 
 Para cada MIÉRCOLES: calibra Heston y Lin & He al corte transversal de ese día (in-sample) y
 evalúa fuera de muestra en el JUEVES siguiente. Se reportan resultados promediados sobre las

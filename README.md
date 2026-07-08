@@ -5,9 +5,14 @@ Implementación, verificación y calibración del modelo de valoración de opcio
 Heston Model with Regime Switching"*, Computational Economics,
 DOI [10.1007/s10614-021-10117-6](https://doi.org/10.1007/s10614-021-10117-6).
 
-Proyecto final del curso *Métodos Numéricos en Finanzas* (Maestría en Actuaría y Finanzas,
-Universidad Nacional de Colombia, 2026-I). Ver [`AGENTS.md`](AGENTS.md) para el contexto y
-[`docs/plan.md`](docs/plan.md) para el plan de implementación.
+Proyecto final del curso *Métodos Numéricos en Finanzas*
+(Universidad Nacional de Colombia, 2026-I).
+
+## Integrantes
+
+- Santiago Botero Daza
+- Julián Alejandro Archila Caro
+- Juan Diego González Layton
 
 ## Requisitos
 
@@ -40,7 +45,6 @@ data/           raw/ (snapshots con fecha), processed/ (filtrados)
 results/        figures/, tables/ (consumidos por el paper)
 paper/          trabajo escrito (Typst)
 slides/         diapositivas (reveal.js)
-docs/           rúbrica, artículo, programa, plan
 ```
 
 ## Mapa script → figura/tabla

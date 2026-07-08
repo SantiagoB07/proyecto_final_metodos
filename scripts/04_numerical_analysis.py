@@ -1,6 +1,6 @@
-"""Análisis numérico del método de valoración (Etapa 4 / sección Discusión).
+"""Análisis numérico del método de valoración.
 
-Estudia los aspectos numéricos que exige la rúbrica:
+Estudia los aspectos numéricos del método:
   (a) Convergencia frente al número de nodos de Gauss-Legendre.
   (b) Convergencia frente al truncamiento u_max, y la explosión de la cola (violación de Feller).
   (c) Comportamiento del integrando de Gil-Pelaez (decaimiento y oscilación).

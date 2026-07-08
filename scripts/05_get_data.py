@@ -1,9 +1,9 @@
-"""Descarga y limpieza de datos de mercado (Etapa 5 / sección Datos).
+"""Descarga y limpieza de datos de mercado.
 
 Descarga las opciones (calls y puts) de SPY (S&P 500) con yfinance, guarda el snapshot crudo
 con fecha en data/raw/, aplica los filtros del artículo (estimando el rendimiento por dividendos
 q por vencimiento vía paridad put-call) y guarda los conjuntos limpios en data/processed/.
-Separa in-sample y out-of-sample alternando strikes por vencimiento. Ver decisiones D7, D8.
+Separa in-sample y out-of-sample alternando strikes por vencimiento.
 
 Reproducibilidad: si ya existe un snapshot crudo del día, lo reutiliza en vez de volver a
 llamar a la API (usar --force para redescargar).
